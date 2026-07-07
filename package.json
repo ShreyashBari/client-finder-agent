@@ -2,7 +2,7 @@
   "name": "client-finder-agent",
   "version": "1.0.0",
   "description": "B2B Lead Scraper and Email Prospecting Agent Dashboard",
-  "main": "api/index.js",
+
   "scripts": {
     "start": "node api/index.js",
     "dev": "node api/index.js"
