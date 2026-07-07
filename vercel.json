@@ -1,7 +1,12 @@
 {
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{api/leads_db.json,index.html,styles.css,app.js}"
+    }
+  },
   "routes": [
     {
-      "src": "/api(.*)",
+      "src": "/(.*)",
       "dest": "api/index.js"
     }
   ]
