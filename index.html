@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClientRadar AI - Lead Discovery & Outreach Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile Header Bar (Visible on mobile only) -->
+        <header class="mobile-header">
+            <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Toggle Navigation Menu">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="mobile-logo">
+                <i data-lucide="radar"></i>
+                <span>ClientRadar <span style="font-size:9px; background:var(--accent-gradient); padding:1px 4px; border-radius:3px; font-weight:800; color:#fff; margin-left:4px;">PRO</span></span>
+            </div>
+            <div style="width: 32px;"></div> <!-- spacer -->
+        </header>
+
+        <!-- Sidebar overlay for closing drawer on click -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">
+                    <i data-lucide="radar"></i>
+                    <div class="pulse-ring"></div>
+                </div>
+                <div class="logo-text">
+                    <h1>ClientRadar <span class="badge-tag">PRO</span></h1>
+                    <p class="subtitle">B2B Outreach Agent</p>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="leads">
+                    <i data-lucide="search"></i>
+                    <span>Lead Search</span>
+                </button>
+                <button class="nav-item" data-view="campaigns">
+                    <i data-lucide="layers"></i>
+                    <span>Campaigns</span>
+                </button>
+                <button class="nav-item" data-view="emails">
+                    <i data-lucide="mail-check"></i>
+                    <span>Emails Sent</span>
+                    <span class="nav-badge" id="sent-badge">0</span>
+                </button>
+                <button class="nav-item" data-view="analytics">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <!-- Active Connection Banner -->
+            <div class="sidebar-connection-status" id="active-connection-banner">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting Server...</span>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- 1. Lead Search View -->
+            <section id="view-leads" class="view-panel active">
+                <header class="view-header">
+                    <div class="header-title">
+                        <h2>Lead Search</h2>
+                        <p>Search and validate B2B prospects using advanced parameters.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="reset-database-btn" class="btn btn-secondary" title="Reset All Data">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Reset Data</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="search-mode-tabs">
+                    <button class="mode-tab" id="mode-directory-btn">
+                        <i data-lucide="database" style="width: 14px; height: 14px;"></i>
+                        <span>B2B Directory</span>
+                    </button>
+                    <button class="mode-tab active" id="mode-live-btn">
+                        <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+                        <span>Freelance Live Search</span>
+                    </button>
+                    <button class="mode-tab" id="mode-maps-btn">
+                        <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                        <span>Google Maps Search</span>
+                    </button>
+                </div>
+
+                <div class="workspace-grid" id="directory-search-grid" style="display: none;">
+                    <!-- Left Sidebar Filters -->
+                    <aside class="search-sidebar">
+                        <div class="sidebar-section-header">
+                            <i data-lucide="filter"></i>
+                            <h3>Filters</h3>
+                            <button id="clear-filters-btn" class="btn-link">Clear All</button>
+                        </div>
+
+                        <div class="filter-accordion">
+                            <!-- Search Niche / Keyword -->
+                            <div class="filter-group">
+                                <label for="filter-niche">Search Niche / Keyword</label>
+                                <input type="text" id="filter-niche" placeholder="e.g. website clients, content clients, power bi dashboards">
+                            </div>
+
+                            <!-- Location -->
+                            <div class="filter-group">
+                                <label for="filter-location">Country / City</label>
+                                <select id="filter-location">
+                                    <option value="all" selected>All Locations</option>
+                                    <option value="US">United States 🇺🇸</option>
+                                    <option value="IN">India 🇮🇳</option>
+                                    <option value="UK">United Kingdom 🇬🇧</option>
+                                    <option value="DE">Germany 🇩🇪</option>
+                                    <option value="SG">Singapore 🇸🇬</option>
+                                    <option value="CA">Canada 🇨🇦</option>
+                                    <option value="AU">Australia 🇦🇺</option>
+                                </select>
+                            </div>
+
+                            <!-- Company Size -->
+                            <div class="filter-group">
+                                <span class="filter-label">Company Size</span>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" name="company-size" value="1 - 10"> 1 - 10 employees</label>
+                                    <label><input type="checkbox" name="company-size" value="11 - 50"> 11 - 50 employees</label>
+                                    <label><input type="checkbox" name="company-size" value="51 - 200"> 51 - 200 employees</label>
+                                    <label><input type="checkbox" name="company-size" value="201 - 500"> 201 - 500 employees</label>
+                                    <label><input type="checkbox" name="company-size" value="500+"> 500+ employees</label>
+                                </div>
+                            </div>
+
+                            <!-- Job Level / Title -->
+                            <div class="filter-group">
+                                <label for="filter-title">Job Title</label>
+                                <input type="text" id="filter-title" placeholder="e.g. Founder, CEO, CTO, VP">
+                            </div>
+
+                            <!-- Technology Used -->
+                            <div class="filter-group">
+                                <span class="filter-label">Technologies Used</span>
+                                <div class="checkbox-group grid-two">
+                                    <label><input type="checkbox" name="tech" value="React"> React</label>
+                                    <label><input type="checkbox" name="tech" value="WordPress"> WordPress</label>
+                                    <label><input type="checkbox" name="tech" value="Shopify"> Shopify</label>
+                                    <label><input type="checkbox" name="tech" value="Stripe"> Stripe</label>
+                                    <label><input type="checkbox" name="tech" value="HubSpot"> HubSpot</label>
+                                    <label><input type="checkbox" name="tech" value="Salesforce"> Salesforce</label>
+                                </select>
+                                </div>
+                            </div>
+
+                            <!-- Confidence Score -->
+                            <div class="filter-group">
+                                <label for="filter-confidence">Email Confidence Score</label>
+                                <select id="filter-confidence">
+                                    <option value="0" selected>Show All Leads</option>
+                                    <option value="80">Verified Only (80%+)</option>
+                                    <option value="90">High Confidence (90%+)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="search-leads-btn" class="btn btn-primary btn-block">
+                            <i data-lucide="play-circle"></i>
+                            <span>Search Database</span>
+                        </button>
+                    </aside>
+
+                    <!-- Leads Search Table Grid -->
+                    <div class="leads-workspace">
+                        <!-- Country Filter Tabs -->
+                        <div class="country-tabs">
+                            <button class="country-tab active" data-region="all">
+                                <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
+                                <span>All Clients</span>
+                                <span class="tab-badge" id="badge-all-count">0</span>
+                            </button>
+                            <button class="country-tab" data-region="india">
+                                <span>🇮🇳 Indian Clients</span>
+                                <span class="tab-badge" id="badge-india-count">0</span>
+                            </button>
+                            <button class="country-tab" data-region="foreign">
+                                <span>🌍 Foreign Clients</span>
+                                <span class="tab-badge" id="badge-foreign-count">0</span>
+                            </button>
+                        </div>
+
+                        <!-- Table actions header -->
+                        <div class="workspace-actions">
+                            <div class="actions-left">
+                                <div class="lead-select-status" id="selected-leads-count">0 selected</div>
+                            </div>
+                            <div class="actions-right">
+                                <button id="add-lead-trigger-btn" class="btn btn-secondary btn-sm" style="border-color: var(--primary); color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i>
+                                    <span>Add Prospect</span>
+                                </button>
+                                <button id="leads-export-csv" class="btn btn-secondary btn-sm">
+                                    <i data-lucide="download"></i>
+                                    <span>Export CSV</span>
+                                </button>
+                                <button id="bulk-enroll-btn" class="btn btn-secondary btn-sm" disabled>
+                                    <i data-lucide="plus-circle"></i>
+                                    <span>Add to Campaign</span>
+                                </button>
+                                <button id="one-click-bulk-pitch-btn" class="btn btn-primary btn-sm btn-gradient" disabled>
+                                    <i data-lucide="zap"></i>
+                                    <span>One-Click Pitch</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Main Table -->
+                        <div class="table-card">
+                            <div class="table-container">
+                                <table class="app-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="checkbox-col"><input type="checkbox" id="leads-select-all"></th>
+                                            <th>Prospect Name</th>
+                                            <th>Job Title</th>
+                                            <th>Company</th>
+                                            <th>Contact Details</th>
+                                            <th>Technologies</th>
+                                            <th class="score-col">Confidence</th>
+                                            <th class="action-col">Outreach</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leads-table-tbody">
+                                        <tr class="empty-state">
+                                            <td colspan="8">
+                                                <div class="empty-message">
+                                                    <i data-lucide="database"></i>
+                                                    <h3>No Leads Loaded</h3>
+                                                    <p>Use the filters on the left and click "Search Database" to fetch high-quality B2B prospects.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Table Pagination Footer -->
+                            <footer class="table-footer">
+                                <div class="pagination-info" id="leads-page-info">Showing 0 of 0 leads</div>
+                                <div class="pagination-controls">
+                                    <button id="leads-prev-btn" class="btn btn-outline btn-sm" disabled><i data-lucide="chevron-left"></i> Previous</button>
+                                    <button id="leads-next-btn" class="btn btn-outline btn-sm" disabled>Next <i data-lucide="chevron-right"></i></button>
+                                </div>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Search Grid (Hidden by default) -->
+                <div class="workspace-grid" id="live-search-grid">
+                    <!-- Left Sidebar Live Platforms Checklist -->
+                    <aside class="search-sidebar">
+                        <div class="sidebar-section-header">
+                            <i data-lucide="filter"></i>
+                            <h3>Job Boards</h3>
+                            <button id="clear-live-platforms-btn" class="btn-link">Clear All</button>
+                        </div>
+                        
+                        <div class="filter-accordion">
+                            <div class="filter-group">
+                                <span class="filter-label">Select Platforms</span>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" name="live-platform" value="Fiverr" checked> Fiverr</label>
+                                    <label><input type="checkbox" name="live-platform" value="Freelancer"> Freelancer</label>
+                                    <label><input type="checkbox" name="live-platform" value="PeoplePerHour"> PeoplePerHour</label>
+                                    <label><input type="checkbox" name="live-platform" value="Toptal"> Toptal</label>
+                                    <label><input type="checkbox" name="live-platform" value="Guru"> Guru</label>
+                                    <label><input type="checkbox" name="live-platform" value="Freelancermap"> Freelancermap</label>
+                                    <label><input type="checkbox" name="live-platform" value="YunoJuno"> YunoJuno</label>
+                                    <label><input type="checkbox" name="live-platform" value="FlexJobs"> FlexJobs</label>
+                                    <label><input type="checkbox" name="live-platform" value="SolidGigs"> SolidGigs</label>
+                                    <label><input type="checkbox" name="live-platform" value="Indeed"> Indeed</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="search-live-btn" class="btn btn-primary btn-block">
+                            <i data-lucide="play-circle"></i>
+                            <span>Search Job Boards</span>
+                        </button>
+                    </aside>
+
+                    <!-- Live Leads Workspace -->
+                    <div class="leads-workspace">
+                        <!-- Top search bar -->
+                        <div class="live-search-bar-row">
+                            <div class="input-wrapper" style="width: 100%; position: relative;">
+                                <i data-lucide="search" class="input-icon" style="position: absolute; left: 12px; top: 12px; color: var(--color-text-muted);"></i>
+                                <input type="text" id="live-search-keyword" value="web design" placeholder="Search keywords (e.g. web design, project management, React)..." style="width: 100%; padding: 10px 12px 10px 38px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--color-text); font-family: inherit; font-size: 14px;">
+                            </div>
+                        </div>
+
+                        <!-- Table actions header -->
+                        <div class="workspace-actions">
+                            <div class="actions-left">
+                                <div class="lead-select-status" id="live-leads-count" style="color: var(--color-text-muted); font-size: 13px;">0 active projects found</div>
+                            </div>
+                        </div>
+
+                        <!-- Main Table -->
+                        <div class="table-card">
+                            <div class="table-container">
+                                <table class="app-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Opportunity / Project Title</th>
+                                            <th>Platform</th>
+                                            <th>Client Name</th>
+                                            <th>Location</th>
+                                            <th>Budget Range</th>
+                                            <th>Outreach Channel</th>
+                                            <th class="action-col">Outreach</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="live-leads-tbody">
+                                        <tr class="empty-state">
+                                            <td colspan="7">
+                                                <div class="empty-message">
+                                                    <i data-lucide="briefcase"></i>
+                                                    <h3>No Live Projects Searched</h3>
+                                                    <p>Select platforms, enter keywords, and click "Search Job Boards" to query freelance contracts in real-time.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Table Pagination Footer -->
+                            <footer class="table-footer">
+                                <div class="pagination-info" id="live-page-info">Showing 0 of 0 projects</div>
+                                <div class="pagination-controls">
+                                    <button id="live-prev-btn" class="btn btn-outline btn-sm" disabled><i data-lucide="chevron-left"></i> Previous</button>
+                                    <button id="live-next-btn" class="btn btn-outline btn-sm" disabled>Next <i data-lucide="chevron-right"></i></button>
+                                </div>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Maps Search Grid (Hidden by default) -->
+                <div class="workspace-grid" id="maps-search-grid" style="display: none;">
+                    <!-- Left Sidebar Filters -->
+                    <aside class="search-sidebar">
+                        <div class="sidebar-section-header">
+                            <i data-lucide="filter"></i>
+                            <h3>Local Filters</h3>
+                            <button id="clear-maps-filters-btn" class="btn-link">Clear All</button>
+                        </div>
+                        
+                        <div class="filter-accordion">
+                            <!-- Business Category -->
+                            <div class="filter-group">
+                                <label for="filter-maps-category">Business Category</label>
+                                <input type="text" id="filter-maps-category" placeholder="e.g. Dentists, Jewelers, Cafes" list="maps-categories-list">
+                                <datalist id="maps-categories-list">
+                                    <option value="Dentists">
+                                    <option value="Jewellers">
+                                    <option value="Restaurants">
+                                    <option value="Real Estate">
+                                    <option value="Lawyers">
+                                    <option value="Gyms">
+                                    <option value="Bakeries">
+                                    <option value="Boutiques">
+                                    <option value="Hair Salons">
+                                </datalist>
+                            </div>
+
+                            <!-- City / Location -->
+                            <div class="filter-group">
+                                <label for="filter-maps-location">City / Location</label>
+                                <input type="text" id="filter-maps-location" placeholder="e.g. New York, London, Toronto">
+                            </div>
+
+                            <!-- Website Audit Status Dropdown -->
+                            <div class="filter-group">
+                                <label for="filter-maps-webstatus">Website Audit Status</label>
+                                <select id="filter-maps-webstatus">
+                                    <option value="all" selected>Show All Businesses</option>
+                                    <option value="issues">Has Website with Issues ⚠️</option>
+                                    <option value="none">Has NO Website ⚠️ (High Opp)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="search-maps-btn" class="btn btn-primary btn-block">
+                            <i data-lucide="play-circle"></i>
+                            <span>Search Google Maps</span>
+                        </button>
+                    </aside>
+
+                    <!-- Maps Leads Workspace -->
+                    <div class="leads-workspace">
+                        <!-- Top status bar -->
+                        <div class="workspace-actions">
+                            <div class="actions-left">
+                                <div class="lead-select-status" id="maps-leads-count" style="color: var(--color-text-muted); font-size: 13px;">0 local businesses found</div>
+                            </div>
+                        </div>
+
+                        <!-- Main Table -->
+                        <div class="table-card">
+                            <div class="table-container">
+                                <table class="app-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Business Name & Category</th>
+                                            <th>Rating & Reviews</th>
+                                            <th>Location / Address</th>
+                                            <th>Website URL</th>
+                                            <th>Website Audit Status</th>
+                                            <th>Outreach Email</th>
+                                            <th class="action-col">Outreach</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="maps-leads-tbody">
+                                        <tr class="empty-state">
+                                            <td colspan="7">
+                                                <div class="empty-message" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;">
+                                                    <i data-lucide="map-pin" style="width: 40px; height: 40px; color: var(--color-text-muted); margin-bottom: 12px;"></i>
+                                                    <h3>No Local Businesses Searched</h3>
+                                                    <p style="color: var(--color-text-muted); font-size: 13px;">Enter a category and city on the left, then click "Search Google Maps" to fetch prospective clients.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Table Pagination Footer -->
+                            <footer class="table-footer">
+                                <div class="pagination-info" id="maps-page-info">Showing 0 of 0 local businesses</div>
+                                <div class="pagination-controls">
+                                    <button id="maps-prev-btn" class="btn btn-outline btn-sm" disabled><i data-lucide="chevron-left"></i> Previous</button>
+                                    <button id="maps-next-btn" class="btn btn-outline btn-sm" disabled>Next <i data-lucide="chevron-right"></i></button>
+                                </div>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Campaigns View -->
+            <section id="view-campaigns" class="view-panel">
+                <header class="view-header">
+                    <div class="header-title">
+                        <h2>Campaigns & Sequences</h2>
+                        <p>Design personalized B2B outreach sequences with custom variables.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="new-campaign-btn" class="btn btn-primary">
+                            <i data-lucide="plus"></i>
+                            <span>Create Campaign</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="campaigns-grid">
+                    <!-- Campaigns List -->
+                    <div class="campaign-list-card">
+                        <div class="card-header">
+                            <i data-lucide="layers"></i>
+                            <h3>Active Campaigns</h3>
+                        </div>
+                        <div class="campaign-items-container" id="campaigns-list-container">
+                            <!-- Populated dynamically -->
+                            <div class="empty-message small">
+                                <i data-lucide="info"></i>
+                                <p>No active campaigns created yet. Click "Create Campaign" above to draft a new sequence.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campaign Editor -->
+                    <div class="campaign-editor-card" id="campaign-editor-panel" style="display: none;">
+                        <div class="card-header">
+                            <i data-lucide="edit-3"></i>
+                            <h3 id="campaign-editor-title">New Campaign Sequence</h3>
+                        </div>
+                        <form id="campaign-form" class="editor-form" onsubmit="return false;">
+                            <div class="form-group">
+                                <label for="campaign-name">Campaign Name</label>
+                                <input type="text" id="campaign-name" placeholder="e.g. Web Design Pitch - SaaS" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="campaign-subject">Email Subject</label>
+                                <input type="text" id="campaign-subject" placeholder="A quick suggestion for {{companyName}}'s website" required>
+                            </div>
+
+                            <div class="form-group relative">
+                                <div class="label-row">
+                                    <label for="campaign-body">Email Template Body</label>
+                                    <div class="variable-helper">
+                                        <span>Insert:</span>
+                                        <button class="var-btn" data-var="{{contactFirstName}}">First Name</button>
+                                        <button class="var-btn" data-var="{{companyName}}">Company</button>
+                                        <button class="var-btn" data-var="{{auditNote}}">Audit Note</button>
+                                        <button class="var-btn" data-var="{{senderName}}">Sender Name</button>
+                                    </div>
+                                </div>
+                                <textarea id="campaign-body" rows="12" placeholder="Hey {{contactFirstName}},&#10;&#10;I was looking at {{companyName}} today and noticed: {{auditNote}}..." required></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="save-campaign-btn">Save Campaign</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Emails Sent / Outreach View -->
+            <section id="view-emails" class="view-panel">
+                <header class="view-header">
+                    <div class="header-title">
+                        <h2>Outreach Activity Log</h2>
+                        <p>Track real-time delivery status, opens, clicks, and replies for all outbound emails.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="sync-replies-btn" class="btn btn-secondary">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Check for Replies</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="activity-log-container">
+                    <!-- Filter bar -->
+                    <div class="log-filters">
+                        <button class="log-filter-btn active" data-status="all">All</button>
+                        <button class="log-filter-btn" data-status="Sent">Sent</button>
+                        <button class="log-filter-btn" data-status="Opened">Opened</button>
+                        <button class="log-filter-btn" data-status="Clicked">Clicked</button>
+                        <button class="log-filter-btn" data-status="Replied">Replied</button>
+                        <button class="log-filter-btn" data-status="Bounced">Bounced</button>
+                    </div>
+
+                    <!-- Logs Table -->
+                    <div class="table-card">
+                        <div class="table-container">
+                            <table class="app-table log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date Sent</th>
+                                        <th>Recipient</th>
+                                        <th>Subject</th>
+                                        <th>From Account</th>
+                                        <th>Outreach Campaign</th>
+                                        <th>Status</th>
+                                        <th class="action-col">History</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sent-emails-tbody">
+                                    <tr class="empty-state">
+                                        <td colspan="7">
+                                            <div class="empty-message">
+                                                <i data-lucide="mail"></i>
+                                                <h3>No Emails Sent Yet</h3>
+                                                <p>All emails sent from lead pitches or sequences will appear here with dynamic delivery status tracking.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Analytics View -->
+            <section id="view-analytics" class="view-panel">
+                <header class="view-header">
+                    <div class="header-title">
+                        <h2>Outreach Analytics</h2>
+                        <p>Monitor delivery, engagement, and conversion rates across campaigns.</p>
+                    </div>
+                </header>
+
+                <div class="analytics-dashboard">
+                    <!-- Stats Grid -->
+                    <div class="analytics-stats-grid">
+                        <div class="analytics-card">
+                            <div class="card-icon blue"><i data-lucide="send"></i></div>
+                            <div class="card-info">
+                                <span class="value" id="analytics-total">0</span>
+                                <span class="label">Emails Sent</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="card-icon green"><i data-lucide="mail-open"></i></div>
+                            <div class="card-info">
+                                <span class="value" id="analytics-open-rate">0%</span>
+                                <span class="label">Open Rate</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="card-icon purple"><i data-lucide="mouse-pointer-click"></i></div>
+                            <div class="card-info">
+                                <span class="value" id="analytics-click-rate">0%</span>
+                                <span class="label">Click-through Rate</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="card-icon gold"><i data-lucide="message-square"></i></div>
+                            <div class="card-info">
+                                <span class="value" id="analytics-reply-rate">0%</span>
+                                <span class="label">Reply Rate</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="card-icon red"><i data-lucide="alert-octagon"></i></div>
+                            <div class="card-info">
+                                <span class="value" id="analytics-bounce-rate">0%</span>
+                                <span class="label">Bounce Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart simulation / progress graphics -->
+                    <div class="performance-report-container">
+                        <div class="report-card">
+                            <div class="card-header">
+                                <i data-lucide="trending-up"></i>
+                                <h3>Delivery Funnel Performance</h3>
+                            </div>
+                            <div class="funnel-container" id="analytics-funnel">
+                                <!-- Rendered dynamically based on stats -->
+                                <div class="funnel-bar sent" style="width: 100%;">
+                                    <span class="funnel-label">Sent (100%)</span>
+                                    <span class="funnel-val" id="funnel-sent-val">0</span>
+                                </div>
+                                <div class="funnel-bar opened" style="width: 0%;" id="funnel-opened-bar">
+                                    <span class="funnel-label">Opened (0%)</span>
+                                    <span class="funnel-val" id="funnel-opened-val">0</span>
+                                </div>
+                                <div class="funnel-bar clicked" style="width: 0%;" id="funnel-clicked-bar">
+                                    <span class="funnel-label">Clicked (0%)</span>
+                                    <span class="funnel-val" id="funnel-clicked-val">0</span>
+                                </div>
+                                <div class="funnel-bar replied" style="width: 0%;" id="funnel-replied-bar">
+                                    <span class="funnel-label">Replied (0%)</span>
+                                    <span class="funnel-val" id="funnel-replied-val">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Settings / SMTP Connections View -->
+            <section id="view-settings" class="view-panel">
+                <header class="view-header">
+                    <div class="header-title">
+                        <h2>Outbound Mailboxes</h2>
+                        <p>Link your Gmail account or custom SMTP configurations to enable real email sending.</p>
+                    </div>
+                </header>
+
+                <div class="settings-workspace">
+                    <!-- Connections list -->
+                    <div class="settings-main-card">
+                        <div class="card-header">
+                            <i data-lucide="mailbox"></i>
+                            <h3>Connected Senders</h3>
+                        </div>
+                        <div class="mailbox-items-container" id="mailboxes-list">
+                            <!-- Populated dynamically -->
+                            <div class="empty-state small">
+                                <i data-lucide="link-2-off"></i>
+                                <h3>No Senders Connected</h3>
+                                <p>You must connect at least one active sender identity to begin dispatching real B2B campaigns.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Connection Box -->
+                    <div class="connection-editor-card">
+                        <div class="card-header">
+                            <i data-lucide="plus-circle"></i>
+                            <h3>Add Sender Mailbox</h3>
+                        </div>
+                        
+                        <!-- Toggle Form Tabs -->
+                        <div class="form-tabs">
+                            <button class="form-tab-btn active" data-tab="gmail_app_pass">Gmail App Password</button>
+                            <button class="form-tab-btn" data-tab="gmail_oauth">Gmail OAuth 2.0</button>
+                            <button class="form-tab-btn" data-tab="custom_smtp">Custom SMTP</button>
+                        </div>
+
+                        <!-- 1. Gmail App Password Form -->
+                        <form id="form-gmail-app-pass" class="settings-form active" onsubmit="return false;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="gmail-ap-sender-name">Sender Name</label>
+                                    <input type="text" id="gmail-ap-sender-name" value="Flowebtech" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gmail-ap-email">Sender Gmail</label>
+                                    <input type="email" id="gmail-ap-email" value="flowwebtech.ai@gmail.com" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="gmail-ap-password">Gmail App Password</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="key" class="input-icon"></i>
+                                    <input type="password" id="gmail-ap-password" placeholder="xxxx xxxx xxxx xxxx" required>
+                                </div>
+                                <span class="help-text">
+                                    A 16-character code generated under Google Account Security. <a href="#" id="setup-help-link">How to generate this?</a>
+                                </span>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="save-gmail-ap-btn">Verify & Connect</button>
+                        </form>
+
+                        <!-- 2. Gmail OAuth Form -->
+                        <form id="form-gmail-oauth" class="settings-form" onsubmit="return false;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="gmail-oa-email">Gmail Address</label>
+                                    <input type="email" id="gmail-oa-email" value="flowwebtech.ai@gmail.com" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="gmail-oa-client-id">Google Client ID</label>
+                                    <input type="text" id="gmail-oa-client-id" placeholder="Enter your Google Client ID" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gmail-oa-client-secret">Google Client Secret</label>
+                                    <input type="password" id="gmail-oa-client-secret" placeholder="Enter your Client Secret" required>
+                                </div>
+                            </div>
+                            <span class="help-text block-margin">
+                                Note: Redirect URI must be set to <code>http://localhost:3000/api/auth/google/callback</code> in Google Developer Console.
+                            </span>
+                            <button type="submit" class="btn btn-primary" id="save-gmail-oa-btn">Connect via Google Consent</button>
+                        </form>
+
+                        <!-- 3. Custom SMTP Form -->
+                        <form id="form-custom-smtp" class="settings-form" onsubmit="return false;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="smtp-sender-name">Sender Name</label>
+                                    <input type="text" id="smtp-sender-name" value="Flowebtech" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp-email">Sender Email</label>
+                                    <input type="email" id="smtp-email" placeholder="your@domain.com" required>
+                                </div>
+                            </div>
+                            <div class="form-row form-row-three">
+                                <div class="form-group">
+                                    <label for="smtp-host">SMTP Host</label>
+                                    <input type="text" id="smtp-host" placeholder="smtp.mailgun.org" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp-port">SMTP Port</label>
+                                    <input type="number" id="smtp-port" value="587" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp-secure">Security</label>
+                                    <select id="smtp-secure">
+                                        <option value="false" selected>STARTTLS (Port 587/25)</option>
+                                        <option value="true">SSL/TLS (Port 465)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="smtp-user">SMTP Username</label>
+                                    <input type="text" id="smtp-user" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="smtp-pass">SMTP Password</label>
+                                    <input type="password" id="smtp-pass" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="save-smtp-btn">Verify & Connect</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Lead Details & Pitch Composer Modal -->
+    <div class="modal-overlay" id="lead-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="company-logo-large" id="modal-company-logo">CR</div>
+                    <div>
+                        <h3 id="modal-company-name">Client Company</h3>
+                        <p class="company-sub"><span id="modal-company-niche">AI Solutions</span> | <span id="modal-company-location">United States</span></p>
+                    </div>
+                </div>
+                <button class="modal-close" id="modal-details-close-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <!-- Left Sidebar Info -->
+                    <div class="detail-sidebar">
+                        <div class="meta-section">
+                            <h4>Overview</h4>
+                            <ul class="meta-list">
+                                <li>
+                                    <span class="label">Website</span>
+                                    <a href="#" class="value selectable-link" id="modal-website" target="_blank">domain.com</a>
+                                </li>
+                                <li>
+                                    <span class="label">Size / Revenue</span>
+                                    <span class="value" id="modal-size-rev">11-50 employees / $500K</span>
+                                </li>
+                                <li>
+                                    <span class="label">Technologies</span>
+                                    <div class="tech-pills" id="modal-tech-stack"></div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="meta-section">
+                            <h4>Direct Contact</h4>
+                            <ul class="meta-list">
+                                <li>
+                                    <span class="label">Name / Title</span>
+                                    <span class="value" id="modal-contact-details">Jane Doe - CMO</span>
+                                </li>
+                                <li>
+                                    <span class="label">Email Address</span>
+                                    <div class="email-edit-container" style="display: flex; flex-direction: column; width: 100%;">
+                                        <div class="email-display-row" id="email-view-mode" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                            <span class="value selectable" id="modal-email">jane@domain.com</span>
+                                            <button id="modal-email-edit-trigger" class="btn btn-outline btn-xs" style="padding: 2px 6px; font-size: 10px; display: flex; align-items: center; gap: 4px;" title="Edit Email">
+                                                <i data-lucide="edit-2" style="width: 10px; height: 10px;"></i> Edit
+                                            </button>
+                                        </div>
+                                        <div class="email-edit-row" id="email-edit-mode" style="display: none; align-items: center; gap: 6px; margin-top: 4px;">
+                                            <input type="email" id="modal-email-input" class="app-input-sm" style="flex: 1; padding: 4px 8px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--color-text); border-radius: var(--radius-sm);">
+                                            <button id="modal-email-save-btn" class="btn btn-primary btn-xs" style="padding: 4px 8px; font-size: 11px;">Save</button>
+                                            <button id="modal-email-cancel-btn" class="btn btn-secondary btn-xs" style="padding: 4px 8px; font-size: 11px;">Cancel</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex-align-center gap-6" style="margin-top: 4px;">
+                                        <span class="badge-verified" id="modal-verification-status">SMTP Verified</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span class="label">Direct Phone</span>
+                                    <span class="value selectable" id="modal-phone">+1 555-0192</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="meta-section">
+                            <h4>Opportunity Audit</h4>
+                            <span class="opp-badge warning" id="modal-opp-badge">Bottleneck Detected</span>
+                            <p class="opp-text" id="modal-audit-note">Detailed notes go here.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar Pitch Writer -->
+                    <div class="outreach-editor">
+                        <div class="editor-header">
+                            <div class="editor-title">
+                                <i data-lucide="sparkles"></i>
+                                <span>Cold Email Outreach</span>
+                            </div>
+                            <div class="tone-selector">
+                                <label for="modal-tone-select">Tone:</label>
+                                <select id="modal-tone-select">
+                                    <option value="casual" selected>Personal / Casual</option>
+                                    <option value="formal">Professional / Formal</option>
+                                    <option value="value">Value-Driven Pitch</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="subject-line">
+                            <span class="sub-label">Subject:</span>
+                            <input type="text" id="modal-email-subject" value="Synergy proposal for Client Company">
+                        </div>
+
+                        <div class="body-wrapper">
+                            <textarea id="modal-email-body" rows="12">Drafting email...</textarea>
+                        </div>
+
+                        <!-- Testing Warning Alert -->
+                        <div class="testing-alert-box" id="composer-testing-alert" style="display: block; margin-top: 10px; padding: 10px 14px; background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); display: flex; gap: 8px; align-items: flex-start; font-size: 11.5px; line-height: 1.4; color: var(--color-text-muted);">
+                            <i data-lucide="alert-circle" style="width: 14px; height: 14px; color: #f59e0b; flex-shrink: 0; margin-top: 2px;"></i>
+                            <span>
+                                <strong>Testing Note:</strong> Seeded B2B database leads use fictional domains. To test actual SMTP delivery and prevent bounces, click the <strong>Edit</strong> button on the left to change this email to a valid mailbox you control.
+                            </span>
+                        </div>
+
+                        <div class="editor-actions">
+                            <button id="modal-copy-btn" class="btn btn-secondary">
+                                <i data-lucide="copy"></i>
+                                <span>Copy to Clipboard</span>
+                            </button>
+                            <button id="modal-send-btn" class="btn btn-primary">
+                                <i data-lucide="send"></i>
+                                <span>Send Pitch (Gmail)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enroll Leads Modal -->
+    <div class="modal-overlay" id="enroll-modal">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3>Enroll Prospects in Campaign</h3>
+                <button class="modal-close" id="enroll-close-btn">&times;</button>
+            </div>
+            <div class="modal-body pad-24">
+                <p class="margin-bottom-16" id="enroll-modal-desc">Enroll 0 selected prospects into an automated campaign.</p>
+                <div class="form-group">
+                    <label for="enroll-campaign-select">Choose Campaign Template</label>
+                    <select id="enroll-campaign-select">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="modal-actions-footer">
+                    <button class="btn btn-secondary" id="enroll-cancel-btn">Cancel</button>
+                    <button class="btn btn-primary" id="enroll-confirm-btn">Enroll & Start Sequence</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tracking History Modal -->
+    <div class="modal-overlay" id="history-modal">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3>Email Delivery Timeline</h3>
+                <button class="modal-close" id="history-close-btn">&times;</button>
+            </div>
+            <div class="modal-body pad-24">
+                <div class="timeline-container" id="history-timeline">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="modal-overlay" id="instructions-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="company-logo-large" style="background: linear-gradient(135deg, #ea4335, #fbbc05); color: #fff;">
+                        <i data-lucide="key" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <h3>Setup Gmail App Password</h3>
+                </div>
+                <button class="modal-close" id="instructions-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px; font-size: 14px; line-height: 1.6; color: var(--color-text-muted); max-height: 80vh; overflow-y: auto;">
+                <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <li>Go to your <a href="https://myaccount.google.com/" target="_blank" style="color: var(--primary); text-decoration: underline;">Google Account Management</a> page.</li>
+                    <li>Select <strong>Security</strong> from the left-hand navigation panel.</li>
+                    <li>Under the <em>"How you sign in to Google"</em> section, ensure <strong>2-Step Verification</strong> is enabled.</li>
+                    <li>Click on <strong>2-Step Verification</strong>, scroll to the very bottom, and select <strong>App passwords</strong>.</li>
+                    <li>Enter a name for the app (e.g., <code>ClientRadar AI</code>) and click <strong>Create</strong>.</li>
+                    <li>Google will generate a 16-character code (e.g., <code>abcd efgh ijkl mnop</code>). Copy this code.</li>
+                    <li>Paste the 16-character code directly into the **Gmail App Password** field in the Settings connection form.</li>
+                </ol>
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); padding: 12px; border-radius: var(--radius-md); color: var(--color-text-main); font-size: 12.5px;">
+                    <strong>Why is this needed?</strong> Google restricts basic password access from third-party apps. An App Password grants a secure, isolated token for sending emails from your address without sharing your actual Gmail password.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Custom Lead Modal -->
+    <div class="modal-overlay" id="add-lead-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Add New B2B Prospect</h3>
+                <button class="modal-close" id="add-lead-close-btn">&times;</button>
+            </div>
+            <form id="add-lead-form" class="editor-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;" onsubmit="return false;">
+                <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-company" style="font-size: 12px; color: var(--color-text-muted);">Company Name</label>
+                        <input type="text" id="add-lead-company" placeholder="e.g. Acme Corp" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-domain" style="font-size: 12px; color: var(--color-text-muted);">Domain / Website</label>
+                        <input type="text" id="add-lead-domain" placeholder="e.g. acme.com" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-contact" style="font-size: 12px; color: var(--color-text-muted);">Contact Full Name</label>
+                        <input type="text" id="add-lead-contact" placeholder="e.g. John Doe" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-email" style="font-size: 12px; color: var(--color-text-muted);">Contact Email</label>
+                        <input type="email" id="add-lead-email" placeholder="e.g. johndoe@acme.com" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-role" style="font-size: 12px; color: var(--color-text-muted);">Job Title</label>
+                        <input type="text" id="add-lead-role" placeholder="e.g. Managing Director" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-niche" style="font-size: 12px; color: var(--color-text-muted);">Industry / Niche</label>
+                        <input type="text" id="add-lead-niche" placeholder="e.g. SaaS, Web Design" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-location" style="font-size: 12px; color: var(--color-text-muted);">Location (City, State, Country)</label>
+                        <input type="text" id="add-lead-location" placeholder="e.g. Austin, TX, United States" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <label for="add-lead-countrycode" style="font-size: 12px; color: var(--color-text-muted);">Country Code (e.g. US, IN, UK)</label>
+                        <input type="text" id="add-lead-countrycode" placeholder="e.g. US" maxLength="2" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px;" required>
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="add-lead-audit" style="font-size: 12px; color: var(--color-text-muted);">Website Audit / Opportunity Note</label>
+                    <textarea id="add-lead-audit" rows="2" placeholder="e.g. Website is slow and missing contact capture forms..." style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--color-text); font-family: inherit; font-size: 13.5px; resize: vertical;"></textarea>
+                </div>
+                <div class="modal-actions-footer" style="padding-top: 12px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color);">
+                    <button class="btn btn-secondary" type="button" id="add-lead-cancel-btn">Cancel</button>
+                    <button class="btn btn-primary" type="submit" id="add-lead-save-btn">Save Prospect</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span class="toast-message" id="toast-text">Success!</span>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>
