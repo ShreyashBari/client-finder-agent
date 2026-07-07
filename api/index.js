@@ -21,8 +21,8 @@ app.use((req, res, next) => {
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
-const DB_FILE = path.join(__dirname, '..', 'database.json');
-const LEADS_FILE = path.join(__dirname, '..', 'leads_db.json');
+const DB_FILE = process.env.VERCEL === '1' ? path.join('/tmp', 'database.json') : path.join(__dirname, '..', 'database.json');
+const LEADS_FILE = path.join(__dirname, 'leads_db.json');
 
 // Read/Write local JSON database
 function readDb() {
@@ -1277,6 +1277,10 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`ClientRadar Agent Server running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`ClientRadar Agent Server running at http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
