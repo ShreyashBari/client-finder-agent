@@ -171,7 +171,45 @@ const CITY_TEMPLATES = {
     }
 };
 
-function getCityTemplate(cityQuery) {
+const DIAL_CODES = {
+    in: '+91',
+    ae: '+971',
+    us: '+1',
+    ca: '+1',
+    gb: '+44',
+    uk: '+44',
+    de: '+49',
+    sg: '+65',
+    au: '+61',
+    nz: '+64',
+    fr: '+33',
+    it: '+39',
+    es: '+34',
+    nl: '+31',
+    za: '+27',
+    br: '+55',
+    mx: '+52',
+    jp: '+81',
+    cn: '+86',
+    kr: '+82'
+};
+
+const geocodingCache = new Map();
+
+function getFlagEmoji(countryCode) {
+    if (!countryCode) return '📍';
+    const codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map(char => 127397 + char.charCodeAt(0));
+    try {
+        return String.fromCodePoint(...codePoints);
+    } catch (e) {
+        return '📍';
+    }
+}
+
+function getCityTemplateSync(cityQuery) {
     if (!cityQuery) return CITY_TEMPLATES.newyork;
     const clean = cityQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
     
@@ -225,6 +263,74 @@ function getCityTemplate(cityQuery) {
         streets: ['Main Street', 'Broadway', 'Oak Avenue', 'Maple Drive', 'High Street', 'Pine Road'],
         neighborhoods: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley']
     };
+}
+
+async function getCityTemplate(cityQuery) {
+    if (!cityQuery) return CITY_TEMPLATES.newyork;
+    
+    const clean = cityQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    // 1. Check local templates
+    for (const key of Object.keys(CITY_TEMPLATES)) {
+        const tpl = CITY_TEMPLATES[key];
+        if (tpl.aliases && tpl.aliases.some(alias => clean.includes(alias) || alias.includes(clean))) {
+            return tpl;
+        }
+    }
+    
+    for (const key of Object.keys(CITY_TEMPLATES)) {
+        if (clean.includes(key) || key.includes(clean)) {
+            return CITY_TEMPLATES[key];
+        }
+    }
+    
+    // 2. Check memory cache
+    if (geocodingCache.has(clean)) {
+        return geocodingCache.get(clean);
+    }
+    
+    // 3. OpenStreetMap geocoding
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityQuery)}&format=json&limit=1&addressdetails=1`;
+        const res = await fetch(url, {
+            headers: {
+                'User-Agent': 'ClientRadar-Outreach-Agent/2.0 (contact@flowwebtech.ai)'
+            }
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data[0] && data[0].address) {
+                const addr = data[0].address;
+                const cc = (addr.country_code || 'us').toLowerCase();
+                const country = addr.country || 'United States';
+                const state = addr.state || addr.county || cityQuery;
+                const city = addr.city || addr.town || addr.suburb || cityQuery;
+                
+                const tpl = {
+                    city: city.charAt(0).toUpperCase() + city.slice(1),
+                    state: state.charAt(0).toUpperCase() + state.slice(1),
+                    country: country,
+                    countryCode: cc.toUpperCase(),
+                    flag: getFlagEmoji(cc),
+                    pinCodes: [addr.postcode || '12345'],
+                    phonePrefix: DIAL_CODES[cc] || '+1',
+                    streets: ['Main Street', 'Broadway', 'Oak Avenue', 'Maple Drive', 'High Street', 'Pine Road'],
+                    neighborhoods: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley']
+                };
+                
+                geocodingCache.set(clean, tpl);
+                return tpl;
+            }
+        }
+    } catch (e) {
+        console.error('Nominatim geocoding error:', e);
+    }
+    
+    // 4. Offline guesser fallback
+    const offlineTpl = getCityTemplateSync(cityQuery);
+    geocodingCache.set(clean, offlineTpl);
+    return offlineTpl;
 }
 
 // Clean name
@@ -362,7 +468,7 @@ function parseAndEnrichAddress(lead, index) {
         country = lead.countryCode || 'United States';
     }
     
-    const tpl = getCityTemplate(city) || getCityTemplate(country);
+    const tpl = getCityTemplateSync(city) || getCityTemplateSync(country);
     
     const street = tpl.streets[index % tpl.streets.length];
     const neighborhood = tpl.neighborhoods[(index * 3) % tpl.neighborhoods.length];
@@ -390,8 +496,7 @@ function parseAndEnrichAddress(lead, index) {
     return enrichedLead;
 }
 
-function generateDynamicB2BLeads(niche, location) {
-    const tpl = getCityTemplate(location);
+function generateDynamicB2BLeads(niche, tpl) {
     const leads = [];
     const usedNames = new Set();
     
@@ -602,7 +707,7 @@ async function verifyTransporter(connection) {
 
 // 1. Leads Endpoint
 // 1. Leads Endpoint
-app.get('/api/leads', (req, res) => {
+app.get('/api/leads', async (req, res) => {
     const { niche, companySize, location, jobTitle, revenue, technology, minConfidence, region, limit = 50, offset = 0 } = req.query;
     
     // Caching
@@ -696,7 +801,8 @@ app.get('/api/leads', (req, res) => {
     
     // Fallback: If no B2B Directory results found for this query location, dynamically generate
     if (results.length === 0 && queryLocation) {
-        results = generateDynamicB2BLeads(queryNiche || 'Consulting', queryLocation);
+        const tpl = await getCityTemplate(queryLocation);
+        results = generateDynamicB2BLeads(queryNiche || 'Consulting', tpl);
     }
     
     if (companySize) {
@@ -1038,14 +1144,14 @@ app.get('/api/live-leads', async (req, res) => {
 
 // 1bb. Google Maps Search Leads endpoint
 // 1bb. Google Maps Search Leads endpoint
-app.get('/api/maps-leads', (req, res) => {
+app.get('/api/maps-leads', async (req, res) => {
     const { category = 'Dentists', location = 'New York', websiteStatus = 'all' } = req.query;
     
     // Clean and validate category/location
     const cat = category.trim();
     const loc = location.trim();
     
-    const tpl = getCityTemplate(loc);
+    const tpl = await getCityTemplate(loc);
     
     const businessPatterns = {
         Dentists: {
