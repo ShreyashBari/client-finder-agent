@@ -113,19 +113,7 @@ async function syncDataFromServer() {
 // Fetch filtered leads from server
 async function fetchLeads() {
     // Show table loader
-    const tbody = document.getElementById('leads-table-tbody');
-    tbody.innerHTML = `
-        <tr class="empty-state">
-            <td colspan="8">
-                <div class="empty-message">
-                    <i data-lucide="loader" class="status-dot pulsing" style="color: var(--primary); width: 40px; height: 40px;"></i>
-                    <h3>Querying B2B Leads Index...</h3>
-                    <p>Filtering and validating email validation schemas...</p>
-                </div>
-            </td>
-        </tr>
-    `;
-    safeCreateIcons();
+    renderLeadsTableSkeleton();
     
     // Construct query parameters
     const params = new URLSearchParams();
@@ -625,9 +613,23 @@ function openLeadDetailsModal(lead) {
     document.getElementById('modal-company-niche').textContent = `${lead.niche}`;
     document.getElementById('modal-company-location').textContent = `${lead.location} ${lead.locationFlag || ''}`;
     
+    document.getElementById('modal-full-address').textContent = lead.address || lead.location || 'N/A';
+    document.getElementById('modal-city-state-zip').textContent = lead.city && lead.state && lead.pinCode ? `${lead.city}, ${lead.state} ${lead.pinCode}` : (lead.city || 'N/A');
+    document.getElementById('modal-country').textContent = lead.country || 'N/A';
+    
+    const mapsLink = document.getElementById('modal-maps-link');
+    if (mapsLink) {
+        if (lead.googleMapsUrl) {
+            mapsLink.href = lead.googleMapsUrl;
+            mapsLink.style.display = 'inline-flex';
+        } else {
+            mapsLink.style.display = 'none';
+        }
+    }
+    
     const web = document.getElementById('modal-website');
-    web.textContent = lead.domain;
-    web.href = `https://${lead.domain}`;
+    web.textContent = lead.domain || 'None';
+    web.href = lead.domain ? (lead.domain.startsWith('http') ? lead.domain : `https://${lead.domain}`) : '#';
     
     document.getElementById('modal-size-rev').textContent = `${lead.companySize} | ${lead.revenue}`;
     
@@ -1023,6 +1025,34 @@ async function sendSinglePitch() {
     sendBtn.disabled = true;
     
     if (!state.activeConnection) {
+        // Mobile platform check
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        
+        if (isMobile) {
+            // Replace newlines with \r\n for universal mailto compatibility
+            const formattedBody = body.replace(/\r?\n/g, '\r\n');
+            const mailtoUrl = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(formattedBody)}`;
+            
+            window.location.href = mailtoUrl;
+            showToast(`Opening mobile email client for ${to}...`);
+            document.getElementById('lead-details-modal').classList.remove('active');
+            
+            // Log manual outreach in background
+            try {
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, subject, body, leadId, isManual: true })
+                });
+                await syncDataFromServer();
+                await fetchLeads();
+            } catch (e) {
+                console.error('Failed to log manual outreach on mobile:', e);
+            }
+            sendBtn.disabled = false;
+            return;
+        }
+
         sendBtn.innerHTML = `<i data-lucide="loader" class="status-dot pulsing"></i> <span>Preparing Composer...</span>`;
         safeCreateIcons();
         
@@ -1848,18 +1878,7 @@ async function performLiveSearch() {
     const liveTbody = document.getElementById('live-leads-tbody');
     if (!liveTbody) return;
     
-    liveTbody.innerHTML = `
-        <tr class="empty-state">
-            <td colspan="7">
-                <div class="empty-message" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;">
-                    <i data-lucide="loader" class="status-dot pulsing" style="color: var(--primary); width: 40px; height: 40px; animation: spin 1.5s linear infinite; margin-bottom: 12px;"></i>
-                    <h3>Querying Live Platforms & Job Boards...</h3>
-                    <p style="color: var(--color-text-muted); font-size: 13px;">Fetching active contracts for freelancer platforms...</p>
-                </div>
-            </td>
-        </tr>
-    `;
-    safeCreateIcons();
+    renderLiveLeadsTableSkeleton();
     
     const keyword = document.getElementById('live-search-keyword').value.trim() || 'web design';
     const platforms = [];
@@ -1963,18 +1982,7 @@ async function performMapsSearch() {
     const mapsTbody = document.getElementById('maps-leads-tbody');
     if (!mapsTbody) return;
     
-    mapsTbody.innerHTML = `
-        <tr class="empty-state">
-            <td colspan="7">
-                <div class="empty-message" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;">
-                    <i data-lucide="loader" class="status-dot pulsing" style="color: var(--primary); width: 40px; height: 40px; animation: spin 1.5s linear infinite; margin-bottom: 12px;"></i>
-                    <h3>Querying Google Maps Places...</h3>
-                    <p style="color: var(--color-text-muted); font-size: 13px;">Extracting local listings and auditing web details...</p>
-                </div>
-            </td>
-        </tr>
-    `;
-    safeCreateIcons();
+    renderMapsLeadsTableSkeleton();
     
     const category = document.getElementById('filter-maps-category').value.trim() || 'Dentists';
     const location = document.getElementById('filter-maps-location').value.trim() || 'New York';
@@ -2145,4 +2153,79 @@ if (mapsNextBtn) {
             renderMapsLeadsTable();
         }
     });
+}
+
+// ----------------------------------------------------
+// Shimmer Skeleton Loader Renders
+// ----------------------------------------------------
+function renderLeadsTableSkeleton() {
+    const tbody = document.getElementById('leads-table-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = Array(5).fill(0).map(() => `
+        <tr class="skeleton-row">
+            <td class="checkbox-col"><div class="skeleton-bar" style="width:16px;height:16px;border-radius:3px;"></div></td>
+            <td data-label="Prospect">
+                <div class="skeleton-bar" style="width:120px;height:14px;margin-bottom:6px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:80px;height:10px;border-radius:3px;"></div>
+            </td>
+            <td data-label="Niche"><div class="skeleton-bar" style="width:70px;height:18px;border-radius:4px;"></div></td>
+            <td data-label="Company">
+                <div class="skeleton-bar" style="width:140px;height:14px;margin-bottom:6px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:90px;height:10px;border-radius:3px;"></div>
+            </td>
+            <td class="email-cell" data-label="Contact">
+                <div class="skeleton-bar" style="width:160px;height:14px;margin-bottom:6px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:100px;height:10px;border-radius:3px;"></div>
+            </td>
+            <td data-label="Tech Tools">
+                <div style="display:flex;gap:4px;">
+                    <div class="skeleton-bar" style="width:50px;height:16px;border-radius:4px;"></div>
+                    <div class="skeleton-bar" style="width:60px;height:16px;border-radius:4px;"></div>
+                </div>
+            </td>
+            <td data-label="Confidence" class="score-col">
+                <div class="skeleton-bar" style="width:40px;height:14px;margin-bottom:4px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:70px;height:6px;border-radius:3px;"></div>
+            </td>
+            <td class="action-col"><div class="skeleton-bar" style="width:65px;height:28px;border-radius:6px;"></div></td>
+        </tr>
+    `).join('');
+}
+
+function renderMapsLeadsTableSkeleton() {
+    const tbody = document.getElementById('maps-leads-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = Array(5).fill(0).map(() => `
+        <tr class="skeleton-row">
+            <td data-label="Business Name">
+                <div class="skeleton-bar" style="width:150px;height:14px;margin-bottom:6px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:90px;height:10px;border-radius:3px;"></div>
+            </td>
+            <td data-label="Rating"><div class="skeleton-bar" style="width:80px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Location"><div class="skeleton-bar" style="width:140px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Website"><div class="skeleton-bar" style="width:110px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Audit Status"><div class="skeleton-bar" style="width:90px;height:20px;border-radius:4px;"></div></td>
+            <td data-label="Email"><div class="skeleton-bar" style="width:160px;height:14px;border-radius:3px;"></div></td>
+            <td class="action-col"><div class="skeleton-bar" style="width:65px;height:28px;border-radius:6px;"></div></td>
+        </tr>
+    `).join('');
+}
+
+function renderLiveLeadsTableSkeleton() {
+    const tbody = document.getElementById('live-leads-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = Array(5).fill(0).map(() => `
+        <tr class="skeleton-row">
+            <td data-label="Opportunity">
+                <div class="skeleton-bar" style="width:200px;height:14px;margin-bottom:6px;border-radius:3px;"></div>
+                <div class="skeleton-bar" style="width:120px;height:10px;border-radius:3px;"></div>
+            </td>
+            <td data-label="Platform"><div class="skeleton-bar" style="width:70px;height:20px;border-radius:4px;"></div></td>
+            <td data-label="Client"><div class="skeleton-bar" style="width:100px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Location"><div class="skeleton-bar" style="width:120px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Budget"><div class="skeleton-bar" style="width:90px;height:14px;border-radius:3px;"></div></td>
+            <td data-label="Channel"><div class="skeleton-bar" style="width:90px;height:14px;border-radius:3px;"></div></td>
+            <td class="action-col"><div class="skeleton-bar" style="width:80px;height:28px;border-radius:6px;"></div></td>
+        </tr>
+    `).join('');
 }

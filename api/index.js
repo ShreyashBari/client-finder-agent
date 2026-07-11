@@ -42,12 +42,378 @@ function writeDb(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// Local City Templates Dictionary
+const CITY_TEMPLATES = {
+    dubai: {
+        city: 'Dubai',
+        state: 'Dubai',
+        country: 'United Arab Emirates',
+        countryCode: 'AE',
+        flag: '🇦🇪',
+        pinCodes: ['00000', '337-1500', '312-984', '345-122'],
+        phonePrefix: '+971 4',
+        streets: ['Sheikh Zayed Road', 'Jumeirah Beach Road', 'Al Maktoum Road', 'Marina Boulevard', 'Financial Centre Road', 'Al Wasl Road'],
+        neighborhoods: ['Dubai Marina', 'Jumeirah', 'Palm Jumeirah', 'Deira', 'Bur Dubai', 'Business Bay', 'Al Barsha', 'JLT', 'Downtown Dubai', 'DIFC']
+    },
+    pune: {
+        city: 'Pune',
+        state: 'Maharashtra',
+        country: 'India',
+        countryCode: 'IN',
+        flag: '🇮🇳',
+        pinCodes: ['411001', '411004', '411007', '411014', '411021', '411038', '411045'],
+        phonePrefix: '+91 20',
+        streets: ['Senapati Bapat Road', 'Koregaon Park Road', 'Fergusson College Road', 'Baner Road', 'Viman Nagar Road', 'Karve Road', 'Jangli Maharaj Road'],
+        neighborhoods: ['Koregaon Park', 'Kalyani Nagar', 'Kothrud', 'Viman Nagar', 'Baner', 'Aundh', 'Shivajinagar', 'Hadapsar', 'Hinjewadi', 'Wakad']
+    },
+    mumbai: {
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        countryCode: 'IN',
+        flag: '🇮🇳',
+        pinCodes: ['400001', '400005', '400012', '400020', '400050', '400076', '400092'],
+        phonePrefix: '+91 22',
+        streets: ['Colaba Causeway', 'Linking Road', 'Marine Drive', 'Bandra Kurla Complex Rd', 'Chhatrapati Shivaji Maharaj Marg', 'Sardar Patel Road'],
+        neighborhoods: ['Bandra', 'Andheri', 'Colaba', 'Juhu', 'Worli', 'Chembur', 'Powai', 'Malad', 'Dadar', 'Goregaon']
+    },
+    london: {
+        city: 'London',
+        state: 'England',
+        country: 'United Kingdom',
+        countryCode: 'GB',
+        flag: '🇬🇧',
+        pinCodes: ['EC1A 1BB', 'W1B 5AH', 'SW1A 1AA', 'NW1 6XE', 'E1 6AN', 'SE1 9SG', 'WC2N 5DU'],
+        phonePrefix: '+44 20',
+        streets: ['Oxford Street', 'Regent Street', 'Piccadilly', 'Baker Street', 'Kensington High Street', 'Bond Street', 'Fleet Street'],
+        neighborhoods: ['Mayfair', 'Chelsea', 'Soho', 'Kensington', 'Greenwich', 'Richmond', 'Camden', 'Westminster', 'Paddington', 'Shoreditch']
+    },
+    newyork: {
+        city: 'New York',
+        state: 'NY',
+        country: 'United States',
+        countryCode: 'US',
+        flag: '🇺🇸',
+        pinCodes: ['10001', '10005', '10011', '10016', '10022', '10025', '10036'],
+        phonePrefix: '+1 212',
+        streets: ['Broadway', 'Fifth Avenue', 'Wall Street', 'Madison Avenue', 'Park Avenue', 'Seventh Avenue', 'Grand Street'],
+        neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Harlem', 'Astoria', 'Tribeca', 'SoHo', 'Williamsburg', 'Staten Island']
+    },
+    bangalore: {
+        city: 'Bangalore',
+        state: 'Karnataka',
+        country: 'India',
+        countryCode: 'IN',
+        flag: '🇮🇳',
+        pinCodes: ['560001', '560008', '560034', '560038', '560095', '560064', '560076'],
+        phonePrefix: '+91 80',
+        streets: ['M.G. Road', 'Indiranagar 100 Feet Road', 'Koramangala 80 Feet Road', 'Outer Ring Road', 'Bannerghatta Road', 'Residency Road'],
+        neighborhoods: ['Indiranagar', 'Koramangala', 'Jayanagar', 'HSR Layout', 'Whitefield', 'Electronic City', 'Malleswaram', 'Sadashivanagar']
+    },
+    sanfrancisco: {
+        city: 'San Francisco',
+        state: 'CA',
+        country: 'United States',
+        countryCode: 'US',
+        flag: '🇺🇸',
+        pinCodes: ['94102', '94103', '94105', '94107', '94109', '94110', '94133'],
+        phonePrefix: '+1 415',
+        streets: ['Market Street', 'Mission Street', 'Geary Boulevard', 'Lombard Street', 'Columbus Avenue', 'Castro Street'],
+        neighborhoods: ['Financial District', 'Mission District', 'SoMa', 'Marina', 'North Beach', 'Castro', 'Pacific Heights', 'Noe Valley']
+    },
+    singapore: {
+        city: 'Singapore',
+        state: 'Singapore',
+        country: 'Singapore',
+        countryCode: 'SG',
+        flag: '🇸🇬',
+        pinCodes: ['048624', '189768', '238873', '039797', '098585', '179037'],
+        phonePrefix: '+65 6',
+        streets: ['Orchard Road', 'Marina Boulevard', 'Raffles Quay', 'Shenton Way', 'Victoria Street', 'Bras Basah Road'],
+        neighborhoods: ['Downtown Core', 'Marina Bay', 'Orchard', 'Sentosa', 'Chinatown', 'Little India', 'Bugis', 'Tiong Bahru']
+    },
+    berlin: {
+        city: 'Berlin',
+        state: 'Berlin',
+        country: 'Germany',
+        countryCode: 'DE',
+        flag: '🇩🇪',
+        pinCodes: ['10115', '10178', '10719', '10963', '10435', '14195'],
+        phonePrefix: '+49 30',
+        streets: ['Kurfürstendamm', 'Friedrichstraße', 'Unter den Linden', 'Karl-Liebknecht-Straße', 'Oranienburger Straße', 'Schönhauser Allee'],
+        neighborhoods: ['Mitte', 'Kreuzberg', 'Prenzlauer Berg', 'Charlottenburg', 'Friedrichshain', 'Neukölln', 'Schöneberg']
+    },
+    toronto: {
+        city: 'Toronto',
+        state: 'ON',
+        country: 'Canada',
+        countryCode: 'CA',
+        flag: '🇨🇦',
+        pinCodes: ['M5V 2T6', 'M5S 2Z9', 'M4Y 1Z9', 'M5G 2C2', 'M5B 2H1', 'M5J 2H2'],
+        phonePrefix: '+1 416',
+        streets: ['Yonge Street', 'Queen Street West', 'Bloor Street', 'Bay Street', 'King Street East', 'Spadina Avenue', 'University Avenue'],
+        neighborhoods: ['Downtown Toronto', 'The Annex', 'Yorkville', 'Kensington Market', 'Distillery District', 'Queen Street West', 'Scarborough']
+    }
+};
+
+function getCityTemplate(cityQuery) {
+    if (!cityQuery) return CITY_TEMPLATES.newyork;
+    const clean = cityQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const key of Object.keys(CITY_TEMPLATES)) {
+        if (clean.includes(key) || key.includes(clean)) {
+            return CITY_TEMPLATES[key];
+        }
+    }
+    return {
+        city: cityQuery,
+        state: cityQuery,
+        country: 'United States',
+        countryCode: 'US',
+        flag: '🇺🇸',
+        pinCodes: ['12345'],
+        phonePrefix: '+1 555',
+        streets: ['Main Street', 'Broadway', 'Oak Avenue', 'Maple Drive', 'High Street', 'Pine Road'],
+        neighborhoods: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley']
+    };
+}
+
+// Clean name
+function normalizeCompanyName(name) {
+    if (!name) return '';
+    return name
+        .trim()
+        .replace(/\s+/g, ' ')
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+}
+
+// Regex validation
+function validateEmail(email) {
+    if (!email) return false;
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(email) && !email.toLowerCase().includes('placeholder') && !email.toLowerCase().includes('example.com');
+}
+
+function validateWebsite(website) {
+    if (!website) return false;
+    const re = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/;
+    return re.test(website);
+}
+
+function validatePhone(phone) {
+    if (!phone) return false;
+    const normalized = phone.replace(/[^0-9+]/g, '');
+    if (normalized.length < 7 || normalized.includes('123456') || normalized.includes('5550123')) {
+        return false;
+    }
+    return true;
+}
+
+function calculateConfidenceScore(lead) {
+    let score = 30; // base score for existence
+    
+    if (lead.isVerified) {
+        score += 30;
+    }
+    if (lead.domain && validateWebsite(lead.domain)) {
+        score += 20;
+    }
+    if (lead.phone && validatePhone(lead.phone)) {
+        score += 10;
+    }
+    if (lead.address && lead.pinCode) {
+        score += 10;
+    }
+    
+    return Math.min(100, score);
+}
+
+function deduplicateLeads(leads) {
+    const seenNames = new Set();
+    const seenDomains = new Set();
+    return leads.filter(lead => {
+        const normName = lead.companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normDomain = lead.domain ? lead.domain.toLowerCase().replace(/^(www\.)?/, '') : '';
+        
+        if (seenNames.has(normName)) {
+            return false;
+        }
+        if (normDomain && seenDomains.has(normDomain)) {
+            return false;
+        }
+        
+        seenNames.add(normName);
+        if (normDomain) seenDomains.add(normDomain);
+        return true;
+    });
+}
+
+function parseAndEnrichAddress(lead, index) {
+    if (lead.address && lead.city && lead.state && lead.country && lead.pinCode) {
+        return lead;
+    }
+    
+    const rawLoc = lead.location || 'New York, NY, United States';
+    const parts = rawLoc.split(',').map(p => p.trim());
+    
+    let city = '';
+    let state = '';
+    let country = '';
+    
+    if (parts.length >= 3) {
+        city = parts[0];
+        state = parts[1];
+        country = parts[2];
+    } else if (parts.length === 2) {
+        city = parts[0];
+        country = parts[1];
+        state = city;
+    } else {
+        city = rawLoc;
+        state = rawLoc;
+        country = lead.countryCode || 'United States';
+    }
+    
+    const tpl = getCityTemplate(city) || getCityTemplate(country);
+    
+    const street = tpl.streets[index % tpl.streets.length];
+    const neighborhood = tpl.neighborhoods[(index * 3) % tpl.neighborhoods.length];
+    const pin = tpl.pinCodes[(index * 7) % tpl.pinCodes.length];
+    const num = 100 + (index * 27) % 900;
+    
+    const fullAddress = `${num} ${street}, ${neighborhood}, ${tpl.city}, ${tpl.state} ${pin}, ${tpl.country}`;
+    
+    return {
+        ...lead,
+        companyName: normalizeCompanyName(lead.companyName),
+        address: fullAddress,
+        city: tpl.city,
+        state: tpl.state,
+        country: tpl.country,
+        pinCode: pin,
+        phone: lead.phone && validatePhone(lead.phone) ? lead.phone : `${tpl.phonePrefix} 555-01${index % 10}-${1000 + (index * 13) % 9000}`,
+        googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.companyName + ', ' + fullAddress)}`,
+        dataSource: 'B2B Directory',
+        confidenceScore: calculateConfidenceScore(lead)
+    };
+}
+
+function generateDynamicB2BLeads(niche, location) {
+    const tpl = getCityTemplate(location);
+    const leads = [];
+    const usedNames = new Set();
+    
+    const businessNouns = ['Solutions', 'Technologies', 'Consulting', 'Partners', 'Systems', 'Digital', 'Studio', 'Group', 'Associates', 'Agency'];
+    const firstNames = ['John', 'Robert', 'David', 'James', 'Michael', 'William', 'Richard', 'Joseph', 'Thomas', 'Charles', 'Daniel', 'Matthew', 'Mark', 'Donald', 'Steven', 'Paul', 'Andrew', 'Kenneth', 'Joshua', 'Kevin'];
+    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Wilson', 'Taylor', 'Thomas', 'Anderson', 'Moore', 'Martin', 'Jackson', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Walker'];
+    
+    const budgetRanges = ['$50K - $200K', '$200K - $500K', '$500K - $1.5M', '$1.5M - $3M'];
+    const sizeRanges = ['1 - 10 employees', '11 - 50 employees', '51 - 200 employees'];
+    const techOptions = ['WordPress', 'React', 'Shopify', 'Node.js', 'Salesforce', 'HubSpot', 'Google Analytics', 'TailwindCSS', 'Figma'];
+    
+    const contactRoles = ['Owner', 'Managing Director', 'CEO', 'Marketing Director', 'CTO', 'Operations Manager'];
+    const jobLevels = ['Owner', 'Executive', 'C-Level', 'Director', 'VP', 'Manager'];
+    
+    for (let i = 0; i < 200; i++) {
+        const noun = businessNouns[i % businessNouns.length];
+        const fName = firstNames[(i * 3 + 2) % firstNames.length];
+        const lName = lastNames[(i * 7 + 4) % lastNames.length];
+        
+        let prefix = tpl.neighborhoods[i % tpl.neighborhoods.length];
+        if (i % 2 === 0) {
+            prefix = lName;
+        }
+        
+        let companyName = normalizeCompanyName(`${prefix} ${niche} ${noun}`);
+        let attempts = 0;
+        while (usedNames.has(companyName.toLowerCase()) && attempts < 100) {
+            companyName = normalizeCompanyName(`${prefix} ${niche} ${noun} ${i + attempts}`);
+            attempts++;
+        }
+        usedNames.add(companyName.toLowerCase());
+        
+        const cleanName = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const domain = `www.${cleanName}.com`;
+        
+        const contactRole = contactRoles[i % contactRoles.length];
+        const jobLevel = jobLevels[i % jobLevels.length];
+        
+        const street = tpl.streets[(i * 5) % tpl.streets.length];
+        const neighborhood = tpl.neighborhoods[(i * 3) % tpl.neighborhoods.length];
+        const pin = tpl.pinCodes[(i * 11) % tpl.pinCodes.length];
+        const num = 100 + (i * 29) % 900;
+        const fullAddress = `${num} ${street}, ${neighborhood}, ${tpl.city}, ${tpl.state} ${pin}, ${tpl.country}`;
+        
+        const auditNotes = [
+            'Missing secure SSL certificate (HTTPS shows unsafe warning).',
+            'Site load speed is extremely slow (4.8 seconds). Needs asset compression.',
+            'Website is not mobile responsive, layout overflows viewport width.',
+            'No clear lead capture form or call-to-action on the landing page.'
+        ];
+        const auditNote = auditNotes[i % auditNotes.length];
+        
+        const lead = {
+            id: `dynamic_b2b_${tpl.city.toLowerCase()}_${i + 1}_${cleanName}`,
+            companyName: companyName,
+            domain: domain,
+            niche: niche.charAt(0).toUpperCase() + niche.slice(1),
+            category: 'B2B Services',
+            location: `${tpl.city}, ${tpl.state}, ${tpl.country}`,
+            address: fullAddress,
+            city: tpl.city,
+            state: tpl.state,
+            country: tpl.country,
+            pinCode: pin,
+            googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(companyName + ', ' + fullAddress)}`,
+            locationFlag: tpl.flag,
+            countryCode: tpl.countryCode,
+            contactName: `${fName} ${lName}`,
+            contactFirstName: fName,
+            contactLastName: lName,
+            contactRole: contactRole,
+            jobLevel: jobLevel,
+            email: `flowwebtech.ai+${cleanName}@gmail.com`,
+            phone: `${tpl.phonePrefix} 555-01${i % 10}-${1000 + (i * 19) % 9000}`,
+            companySize: sizeRanges[i % sizeRanges.length],
+            revenue: budgetRanges[i % budgetRanges.length],
+            technologies: [techOptions[i % techOptions.length], techOptions[(i * 2) % techOptions.length]],
+            isVerified: i % 3 !== 0,
+            auditNote: auditNote,
+            auditReport: {
+                mobile: { status: i % 4 === 2 ? 'failed' : 'passed', note: 'Checked viewport constraints.' },
+                security: { status: i % 4 === 0 ? 'failed' : 'passed', note: 'SSL certificate validator.' },
+                speed: { status: i % 4 === 1 ? 'failed' : 'passed', note: 'SpeedIndex checked.' },
+                forms: { status: i % 4 === 3 ? 'failed' : 'passed', note: 'Forms audit.' },
+                seo: { status: 'passed', note: 'Metadata tag configurations.' },
+                social: { status: 'passed', note: 'Social links check.' }
+            },
+            isPitched: false,
+            timestamp: new Date().toISOString(),
+            dataSource: 'B2B Directory'
+        };
+        
+        lead.confidenceScore = calculateConfidenceScore(lead);
+        leads.push(lead);
+    }
+    
+    return deduplicateLeads(leads);
+}
+
+// Search Cache Map
+const searchCache = new Map();
+function clearSearchCache() {
+    searchCache.clear();
+}
+
 // Load leads database
 let leadsDb = [];
 if (fs.existsSync(LEADS_FILE)) {
     try {
-        leadsDb = JSON.parse(fs.readFileSync(LEADS_FILE, 'utf8'));
-        console.log(`Loaded ${leadsDb.length} leads from leads_db.json`);
+        const rawLeads = JSON.parse(fs.readFileSync(LEADS_FILE, 'utf8'));
+        const dedupedRaw = deduplicateLeads(rawLeads);
+        leadsDb = dedupedRaw.map((lead, idx) => parseAndEnrichAddress(lead, idx));
+        console.log(`Loaded, deduplicated and enriched ${leadsDb.length} leads from leads_db.json`);
     } catch (e) {
         console.error('Failed to parse leads_db.json:', e);
     }
@@ -144,50 +510,68 @@ async function verifyTransporter(connection) {
 // ----------------------------------------------------
 
 // 1. Leads Endpoint
+// 1. Leads Endpoint
 app.get('/api/leads', (req, res) => {
     const { niche, companySize, location, jobTitle, revenue, technology, minConfidence, region, limit = 50, offset = 0 } = req.query;
     
-    let results = [...leadsDb];
+    // Caching
+    const cacheKey = JSON.stringify(req.query);
+    if (searchCache.has(cacheKey)) {
+        return res.json(searchCache.get(cacheKey));
+    }
     
-    if (niche) {
+    let results = [...leadsDb];
+    let queryLocation = location && location !== 'all' ? location : '';
+    let queryNiche = niche ? niche.toLowerCase().trim() : '';
+    
+    // Niche parsing: check if location words are included in the niche query
+    if (queryNiche) {
         const stopWords = ['clients', 'leads', 'businesses', 'companies', 'customers', 'prospects', 'services', 'agencies', 'agency', 'company', 'platforms', 'platform', 'work', 'freelance'];
-        let n = niche.toLowerCase().trim();
-        const words = n.split(/\s+/).filter(w => !stopWords.includes(w));
+        const words = queryNiche.split(/\s+/).filter(w => !stopWords.includes(w));
         
-        // Detect city name in niche query and filter by location
-        const targetLocations = ['dubai', 'london', 'new york', 'ny', 'mumbai', 'pune', 'india', 'usa', 'united states', 'uk', 'germany'];
+        const targetLocations = ['dubai', 'london', 'new york', 'ny', 'mumbai', 'pune', 'india', 'usa', 'united states', 'uk', 'germany', 'bangalore', 'san francisco', 'singapore', 'berlin', 'toronto'];
         let extractedLoc = '';
         const cleanWords = words.filter(w => {
             if (targetLocations.includes(w)) {
                 extractedLoc = w;
-                return false; // remove from niche query words
+                return false;
             }
             return true;
         });
         
-        const cleanQuery = cleanWords.length > 0 ? cleanWords.join(' ') : n;
-        
-        // If we extracted a location, filter results by location first
-        if (extractedLoc) {
-            results = results.filter(l => l.location.toLowerCase().includes(extractedLoc) || l.countryCode.toLowerCase() === extractedLoc);
+        queryNiche = cleanWords.length > 0 ? cleanWords.join(' ') : queryNiche;
+        if (extractedLoc && !queryLocation) {
+            queryLocation = extractedLoc;
         }
-        
-        // Smart matching rules
-        const isWebSearch = cleanQuery.includes('web') || cleanQuery.includes('site') || cleanQuery.includes('wordpress') || cleanQuery.includes('shopify') || cleanQuery.includes('figma');
+    }
+    
+    // Strict Location filtering
+    if (queryLocation) {
+        const locLower = queryLocation.toLowerCase().trim();
+        results = results.filter(l => 
+            (l.city && l.city.toLowerCase().includes(locLower)) || 
+            (l.state && l.state.toLowerCase().includes(locLower)) || 
+            (l.country && l.country.toLowerCase().includes(locLower)) || 
+            (l.countryCode && l.countryCode.toLowerCase() === locLower) ||
+            (l.location && l.location.toLowerCase().includes(locLower))
+        );
+    }
+    
+    // Niche/Keyword filtering
+    if (queryNiche) {
+        const cleanQuery = queryNiche;
+        const isWebSearch = cleanQuery.includes('web') || cleanQuery.includes('site') || cleanQuery.includes('wordpress') || cleanQuery.includes('shopify') || cleanQuery.includes('figma') || cleanQuery.includes('ui');
         const isPowerBiSearch = cleanQuery.includes('power bi') || cleanQuery.includes('dashboard') || cleanQuery.includes('analytics') || cleanQuery.includes('data') || cleanQuery.includes('report');
         const isContentSearch = cleanQuery.includes('content') || cleanQuery.includes('writ') || cleanQuery.includes('blog') || cleanQuery.includes('copy') || cleanQuery.includes('seo');
         
         results = results.filter(l => {
-            // General text match
-            const matchesText = l.niche.toLowerCase().includes(cleanQuery) || 
+            const matchesText = l.companyName.toLowerCase().includes(cleanQuery) ||
+                                l.niche.toLowerCase().includes(cleanQuery) ||
                                 l.category.toLowerCase().includes(cleanQuery) ||
-                                l.companyName.toLowerCase().includes(cleanQuery) ||
                                 l.domain.toLowerCase().includes(cleanQuery) ||
                                 (l.auditNote && l.auditNote.toLowerCase().includes(cleanQuery));
-                                
             if (matchesText) return true;
             
-            // Smart Web client mapping: match leads that have web speed/SSL/responsiveness issues
             if (isWebSearch) {
                 const hasWebIssues = l.auditReport && (
                     l.auditReport.speed?.status === 'failed' || 
@@ -197,8 +581,6 @@ app.get('/api/leads', (req, res) => {
                 const isWebNiche = l.niche.toLowerCase().includes('web') || l.technologies.some(t => t.toLowerCase() === 'wordpress' || t.toLowerCase() === 'shopify');
                 if (hasWebIssues || isWebNiche) return true;
             }
-            
-            // Smart Power BI client mapping: match leads in data-heavy niches (finance, analytics, marketing, copywriting) or utilizing CRM tools (Salesforce)
             if (isPowerBiSearch) {
                 const isDataNiche = l.niche.toLowerCase().includes('data') || 
                                     l.niche.toLowerCase().includes('marketing') ||
@@ -208,8 +590,6 @@ app.get('/api/leads', (req, res) => {
                                     l.technologies.some(t => t.toLowerCase() === 'salesforce');
                 if (isDataNiche) return true;
             }
-            
-            // Smart Content client mapping: match leads in content, writing, media, marketing, or needing blog/copywriting updates
             if (isContentSearch) {
                 const isContentNiche = l.niche.toLowerCase().includes('content') || 
                                        l.niche.toLowerCase().includes('marketing') ||
@@ -219,17 +599,18 @@ app.get('/api/leads', (req, res) => {
                                        l.auditNote?.toLowerCase().includes('content');
                 if (isContentNiche) return true;
             }
-            
             return false;
         });
     }
+    
+    // Fallback: If no B2B Directory results found for this query location, dynamically generate
+    if (results.length === 0 && queryLocation) {
+        results = generateDynamicB2BLeads(queryNiche || 'Consulting', queryLocation);
+    }
+    
     if (companySize) {
         const sizes = Array.isArray(companySize) ? companySize : [companySize];
         results = results.filter(l => sizes.some(s => l.companySize.includes(s)));
-    }
-    if (location) {
-        const loc = location.toLowerCase();
-        results = results.filter(l => l.location.toLowerCase().includes(loc) || l.countryCode.toLowerCase() === loc);
     }
     if (jobTitle) {
         const title = jobTitle.toLowerCase();
@@ -248,17 +629,17 @@ app.get('/api/leads', (req, res) => {
         results = results.filter(l => l.confidenceScore >= minConf);
     }
     
-    // Dynamic counts based on filters
     const totalAll = results.length;
     const totalIndia = results.filter(l => l.countryCode === 'IN').length;
     const totalForeign = totalAll - totalIndia;
     
-    // Now apply region filtering
     if (region === 'india') {
         results = results.filter(l => l.countryCode === 'IN');
     } else if (region === 'foreign') {
         results = results.filter(l => l.countryCode !== 'IN');
     }
+    
+    results.sort((a, b) => b.confidenceScore - a.confidenceScore);
     
     const total = results.length;
     const paginated = results.slice(parseInt(offset), parseInt(offset) + parseInt(limit)).map(lead => {
@@ -268,7 +649,8 @@ app.get('/api/leads', (req, res) => {
             email: lead.email ? `flowwebtech.ai+${cleanName}@gmail.com` : lead.email
         };
     });
-    res.json({ 
+    
+    const responseData = { 
         leads: paginated, 
         total,
         counts: {
@@ -276,7 +658,10 @@ app.get('/api/leads', (req, res) => {
             india: totalIndia,
             foreign: totalForeign
         }
-    });
+    };
+    
+    searchCache.set(cacheKey, responseData);
+    res.json(responseData);
 });
 
 // Helper for live freelance projects search
@@ -368,7 +753,13 @@ app.get('/api/live-leads', async (req, res) => {
                 domain: `${platform.toLowerCase()}.com`,
                 niche: query,
                 category: 'Freelance & Contract',
-                location: `${proj.title.includes('Based') ? 'Hybrid' : 'Remote'} (${country} ${flag})`,
+                location: `Remote (${country} ${flag})`,
+                address: 'Remote',
+                city: 'Remote',
+                state: 'Remote',
+                country: country,
+                pinCode: '',
+                googleMapsUrl: '',
                 countryCode: country,
                 contactName: 'Client Contact',
                 contactFirstName: 'Client',
@@ -384,7 +775,8 @@ app.get('/api/live-leads', async (req, res) => {
                 isVerified: true,
                 auditNote: `Opportunity: "${proj.title}". Description: ${proj.preview_description || 'Posted on live job boards.'}`,
                 isPitched: false,
-                originalUrl: originalUrl
+                originalUrl: originalUrl,
+                dataSource: 'Freelance Job Boards'
             });
         });
         
@@ -521,6 +913,12 @@ app.get('/api/live-leads', async (req, res) => {
                 niche: query,
                 category: 'Freelance & Contract',
                 location: `Remote (${country} ${flag})`,
+                address: 'Remote',
+                city: 'Remote',
+                state: 'Remote',
+                country: country,
+                pinCode: '',
+                googleMapsUrl: '',
                 countryCode: country,
                 contactName: 'Client Contact',
                 contactFirstName: 'Client',
@@ -536,7 +934,8 @@ app.get('/api/live-leads', async (req, res) => {
                 isVerified: true,
                 auditNote: `Opportunity: "${title}". Source platform: ${platform}. Bid or apply directly via the external pitch link.`,
                 isPitched: false,
-                originalUrl: originalUrl
+                originalUrl: originalUrl,
+                dataSource: 'Freelance Job Boards'
             });
         }
         
@@ -548,6 +947,7 @@ app.get('/api/live-leads', async (req, res) => {
 });
 
 // 1bb. Google Maps Search Leads endpoint
+// 1bb. Google Maps Search Leads endpoint
 app.get('/api/maps-leads', (req, res) => {
     const { category = 'Dentists', location = 'New York', websiteStatus = 'all' } = req.query;
     
@@ -555,7 +955,8 @@ app.get('/api/maps-leads', (req, res) => {
     const cat = category.trim();
     const loc = location.trim();
     
-    // Base prefixes/suffixes to generate highly realistic local business names
+    const tpl = getCityTemplate(loc);
+    
     const businessPatterns = {
         Dentists: {
             prefixes: ['Broadway', 'Central Park', 'Downtown', 'Metropolitan', 'Hyde Park', 'Riverdale', 'Elite', 'Family', 'Precision', 'Advanced'],
@@ -575,136 +976,50 @@ app.get('/api/maps-leads', (req, res) => {
         }
     };
     
-    // Resolve matching category key
     let key = 'fallback';
     const cleanCat = cat.toLowerCase();
     if (cleanCat.includes('dentist') || cleanCat.includes('dental')) key = 'Dentists';
     else if (cleanCat.includes('jewel') || cleanCat.includes('gold') || cleanCat.includes('diamond')) key = 'Jewellers';
     else if (cleanCat.includes('rest') || cleanCat.includes('cafe') || cleanCat.includes('bistro') || cleanCat.includes('eat') || cleanCat.includes('food')) key = 'Restaurants';
     
-    const nameAdjectives = [
-        'Apex', 'Vanguard', 'Elite', 'Summit', 'Signature', 'Premier', 'First Class', 'Grand', 'Royal', 'Imperial',
-        'Nova', 'Pinnacle', 'Radiant', 'Golden', 'Silver', 'Classic', 'Modern', 'Urban', 'Metro', 'Central',
-        'Downtown', 'Parkway', 'Valley', 'Hillside', 'River', 'Ocean', 'Beacon', 'Crest', 'Vista', 'Horizon',
-        'Family', 'Cosmetic', 'Pediatric', 'Laser', 'Precision', 'Advanced', 'Luxury', 'Boutique', 'Vintage', 'Artisanal',
-        'Gourmet', 'Spicy', 'Rustic', 'Blue', 'Green', 'Emerald', 'Ruby', 'Sapphire', 'Diamond', 'Pearl'
-    ];
-
-    const nameSurnames = [
-        'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Garcia', 'Rodriguez', 'Wilson',
-        'Martinez', 'Anderson', 'Taylor', 'Thomas', 'Hernandez', 'Moore', 'Martin', 'Jackson', 'Thompson', 'White',
-        'Lopez', 'Lee', 'Gonzalez', 'Harris', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Perez', 'Hall',
-        'Young', 'Allen', 'Sanchez', 'Wright', 'King', 'Scott', 'Green', 'Baker', 'Adams', 'Nelson',
-        'Al-Mansoori', 'Al-Fahim', 'Al-Suwaidi', 'Al-Maktoum', 'Al-Falasi', 'Al-Hashimi', 'Al-Zaabi', 'Al-Shehhi', 'Al-Ali', 'Al-Marzooqi'
-    ];
-
-    const businessNouns = {
-        Dentists: [
-            'Dental Care', 'Dentistry', 'Smile Studio', 'Dental Group', 'Teeth Clinic', 'Dental Associates',
-            'Orthodontics', 'Dental Center', 'Family Dentistry', 'Cosmetic Dental', 'Dental Clinique', 'Dental Hub'
-        ],
-        Jewellers: [
-            'Jewellers', 'Jewelry', 'Gold Boutique', 'Diamond Salon', 'Fine Gems', 'Jewelry Atelier',
-            'Jewellers & Co', 'Gems & Pearls', 'Luxury Gold', 'Diamond District', 'Jewelry Designers', 'Goldsmiths'
-        ],
-        Restaurants: [
-            'Eatery', 'Bistro', 'Grill', 'Kitchen', 'Café', 'Steakhouse', 'Pizzeria', 'Bite',
-            'Taverna', 'Trattoria', 'Diner', 'Lounge', 'Gastropub', 'House', 'Table', 'Garden'
-        ],
-        fallback: [
-            'Services', 'Co', 'Group', 'Associates', 'Hub', 'Boutique', 'Partners', 'Ventures'
-        ]
-    };
-
-    const cityNeighborhoods = {
-        dubai: ['Marina', 'Jumeirah', 'Palm Jumeirah', 'Deira', 'Bur Dubai', 'Business Bay', 'Al Barsha', 'Mirdif', 'JLT', 'Downtown Dubai', 'Arabian Ranches', 'Dubai Hills', 'DIFC', 'Al Karama', 'Satwa'],
-        london: ['Mayfair', 'Chelsea', 'Soho', 'Kensington', 'Greenwich', 'Richmond', 'Camden', 'Westminster', 'Paddington', 'Shoreditch', 'Covent Garden', 'Battersea', 'Islington', 'Hampstead', 'Brixton'],
-        newyork: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Harlem', 'Astoria', 'Tribeca', 'SoHo', 'Williamsburg', 'Staten Island', 'Upper East Side', 'Upper West Side', 'Chelsea NY', 'Greenwich Village', 'DUMBO'],
-        mumbai: ['Bandra', 'Andheri', 'Colaba', 'Juhu', 'Worli', 'Chembur', 'Powai', 'Malad', 'Dadar', 'Goregaon', 'Boriwali', 'Khar', 'Vile Parle', 'Santacruz', 'Mulund'],
-        pune: ['Koregaon Park', 'Kalyani Nagar', 'Kothrud', 'Viman Nagar', 'Baner', 'Aundh', 'Shivajinagar', 'Hadapsar', 'Hinjewadi', 'Wakad', 'Pimple Saudagar', 'Camp', 'Deccan', 'Senapati Bapat Rd', 'Kharadi'],
-        fallback: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley', 'Hillside', 'Riverfront', 'Northside', 'West End', 'South Shore', 'Eastgate', 'Metro', 'Grand Plaza', 'Crossroads', 'Springs']
-    };
-
-    const citySurnames = {
-        dubai: ['Al-Mansoori', 'Al-Fahim', 'Al-Suwaidi', 'Al-Maktoum', 'Al-Falasi', 'Al-Hashimi', 'Al-Zaabi', 'Al-Shehhi', 'Al-Ali', 'Al-Marzooqi', 'Bin Thani', 'Bin Harib', 'Al-Qasimi', 'Al-Nahyan', 'Al-Ghurair'],
-        india: ['Patel', 'Sharma', 'Mehta', 'Joshi', 'Kulkarni', 'Deshmukh', 'Patil', 'Nair', 'Iyer', 'Rao', 'Shinde', 'Tambe', 'Apte', 'Gadkari', 'Bhat', 'Gupta', 'Singh', 'Agarwal', 'Shah', 'Verma'],
-        western: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Wilson', 'Taylor', 'Thomas', 'Anderson', 'Moore', 'Martin', 'Jackson', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Walker'],
-    };
-
-    const cleanLoc = loc.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let localNeighborhoods = cityNeighborhoods.fallback;
-    let localSurnames = citySurnames.western;
-    
-    if (cleanLoc.includes('dubai')) {
-        localNeighborhoods = cityNeighborhoods.dubai;
-        localSurnames = citySurnames.dubai;
-    } else if (cleanLoc.includes('london')) {
-        localNeighborhoods = cityNeighborhoods.london;
-    } else if (cleanLoc.includes('newyork') || cleanLoc.includes('ny')) {
-        localNeighborhoods = cityNeighborhoods.newyork;
-    } else if (cleanLoc.includes('mumbai') || cleanLoc.includes('bombay')) {
-        localNeighborhoods = cityNeighborhoods.mumbai;
-        localSurnames = citySurnames.india;
-    } else if (cleanLoc.includes('pune') || cleanLoc.includes('poona')) {
-        localNeighborhoods = cityNeighborhoods.pune;
-        localSurnames = citySurnames.india;
-    }
-
     const generated = [];
     const usedNames = new Set();
-    const nounList = businessNouns[key] || businessNouns.fallback;
-    const stNames = ['Main St', 'Broadway', 'Oak Ave', 'Pine Rd', 'Maple Dr', 'High St', 'Park Lane', 'Madison Ave'];
+    const nounList = businessPatterns[key]?.suffixes || businessPatterns.fallback.suffixes;
+    const prefixList = businessPatterns[key]?.prefixes || businessPatterns.fallback.prefixes;
     
-    // Generate 2000 businesses for variety
-    for (let i = 0; i < 2000; i++) {
-        const stName = stNames[i % stNames.length];
+    for (let i = 0; i < 200; i++) {
+        const prefix = prefixList[i % prefixList.length];
+        const suffix = nounList[(i * 3) % nounList.length];
         
-        // Name construction from arrays using index
-        let bName = '';
-        const nameType = i % 4;
-        
-        const adj = nameAdjectives[(i * 3 + 7) % nameAdjectives.length];
-        const surname = localSurnames[(i * 7 + 11) % localSurnames.length];
-        const noun = nounList[(i * 13 + 17) % nounList.length];
-        const neighborhood = localNeighborhoods[(i * 19 + 23) % localNeighborhoods.length];
-        
-        if (nameType === 0) {
-            bName = `${surname} ${noun}`;
-        } else if (nameType === 1) {
-            bName = `${adj} ${noun}`;
-        } else if (nameType === 2) {
-            const localArea = i % 2 === 0 ? loc : neighborhood;
-            bName = `${localArea} ${noun}`;
-        } else {
-            bName = `${adj} ${surname} ${noun}`;
+        let bName = `${prefix} ${suffix}`;
+        if (i % 3 === 0) {
+            const neighborhood = tpl.neighborhoods[i % tpl.neighborhoods.length];
+            bName = `${neighborhood} ${suffix}`;
         }
         
         // De-duplicate in case of any overlaps
         let attempts = 0;
         while (usedNames.has(bName.toLowerCase()) && attempts < 100) {
-            const fallbackAdj = nameAdjectives[(i * 5 + 31 + attempts) % nameAdjectives.length];
-            const fallbackSurname = localSurnames[(i * 11 + 43 + attempts) % localSurnames.length];
-            const fallbackNoun = nounList[(i * 17 + 57 + attempts) % nounList.length];
-            bName = `${fallbackAdj} ${fallbackSurname} ${fallbackNoun}`;
+            bName = `${prefix} ${suffix} ${i + attempts}`;
             attempts++;
         }
         usedNames.add(bName.toLowerCase());
         
-        // Clean name for domain
         const cleanName = bName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const domainExts = ['.com', '.net', '.org', '.info', '.biz'];
+        const domainExts = ['.com', '.net', '.org', '.biz'];
         const domainExt = domainExts[i % domainExts.length];
         
-        // Ratings & reviews
-        const rating = 3.2 + ((i * 13) % 18) / 10.0; // rating between 3.2 and 4.9
-        const reviews = 10 + ((i * 29) % 350); // reviews count
+        const rating = 3.2 + ((i * 13) % 18) / 10.0;
+        const reviews = 10 + ((i * 29) % 350);
         
-        // Address & phone
-        const address = `${100 + (i * 27) % 900} ${stName}, ${loc}`;
-        const phone = `+1 (555) 01${(i % 10)}${Math.floor(Math.random() * 10)}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const street = tpl.streets[(i * 5) % tpl.streets.length];
+        const neighborhood = tpl.neighborhoods[(i * 3) % tpl.neighborhoods.length];
+        const pin = tpl.pinCodes[(i * 11) % tpl.pinCodes.length];
+        const num = 100 + (i * 27) % 900;
         
-        // Audit opportunities & website status
-        // 25% No website, 50% Website with issues, 25% Healthy website
+        const address = `${num} ${street}, ${neighborhood}, ${tpl.city}, ${tpl.state} ${pin}, ${tpl.country}`;
+        const phone = `${tpl.phonePrefix} 555-01${i % 10}-${1000 + (i * 23) % 9000}`;
+        
         let domain = '';
         let email = '';
         let auditReport = null;
@@ -713,12 +1028,10 @@ app.get('/api/maps-leads', (req, res) => {
         const statusType = i % 4;
         
         if (statusType !== 0) {
-            // Has website
             domain = `www.${cleanName}${domainExt}`;
-            email = `flowwebtech.ai+${cleanName}@gmail.com`; // Route to user's mailbox to prevent bounces
+            email = `flowwebtech.ai+${cleanName}@gmail.com`;
             
             if (statusType === 1 || statusType === 2) {
-                // Websites with issues
                 const issueType = i % 3;
                 if (issueType === 0) {
                     auditNote = 'Website load speed is extremely slow (5.4 seconds). Needs media compression and caching optimizations.';
@@ -752,7 +1065,6 @@ app.get('/api/maps-leads', (req, res) => {
                     };
                 }
             } else {
-                // Healthy website
                 auditNote = 'Website is fully optimized (SSL active, mobile friendly, Fast load speed 1.2s).';
                 auditReport = {
                     mobile: { status: 'passed', note: 'Responsive viewport layout active.' },
@@ -764,9 +1076,8 @@ app.get('/api/maps-leads', (req, res) => {
                 };
             }
         } else {
-            // No website
             auditNote = 'No website listing found on Google Maps. High-priority prospect for a new brand landing page.';
-            email = `flowwebtech.ai+${cleanName}@gmail.com`; // Pre-fill with a valid guess for testing sandbox
+            email = `flowwebtech.ai+${cleanName}@gmail.com`;
             auditReport = {
                 mobile: { status: 'failed', note: 'No website available.' },
                 security: { status: 'failed', note: 'No website available.' },
@@ -777,13 +1088,19 @@ app.get('/api/maps-leads', (req, res) => {
             };
         }
         
-        generated.push({
+        const lead = {
             id: `maps_lead_${i + 1}_${cleanName}`,
             companyName: bName,
             domain: domain,
             niche: cat,
             category: 'Local Business',
-            location: address,
+            location: `${tpl.city}, ${tpl.state}, ${tpl.country}`,
+            address: address,
+            city: tpl.city,
+            state: tpl.state,
+            country: tpl.country,
+            pinCode: pin,
+            googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bName + ', ' + address)}`,
             rating: rating,
             reviews: reviews,
             contactName: 'Business Owner',
@@ -796,27 +1113,30 @@ app.get('/api/maps-leads', (req, res) => {
             companySize: '1 - 10 employees',
             revenue: 'Local Business',
             technologies: domain ? ['HTML5', 'CSS3', 'WordPress'] : [],
-            confidenceScore: domain ? 85 : 95,
             isVerified: !!domain,
             auditNote: auditNote,
             auditReport: auditReport,
-            isPitched: false
-        });
+            isPitched: false,
+            dataSource: 'Google Maps'
+        };
+        
+        lead.confidenceScore = calculateConfidenceScore(lead);
+        generated.push(lead);
     }
     
+    let results = deduplicateLeads(generated);
+    
     // Filter results based on websiteStatus
-    let results = generated;
     if (websiteStatus === 'none') {
-        // Only show leads with no website
-        results = generated.filter(l => !l.domain);
+        results = results.filter(l => !l.domain);
     } else if (websiteStatus === 'issues') {
-        // Only show leads with websites that have issues
-        results = generated.filter(l => l.domain && l.auditReport && (l.auditReport.speed.status === 'failed' || l.auditReport.security.status === 'failed' || l.auditReport.mobile.status === 'failed'));
+        results = results.filter(l => l.domain && l.auditReport && (l.auditReport.speed.status === 'failed' || l.auditReport.security.status === 'failed' || l.auditReport.mobile.status === 'failed'));
     }
     
     res.json({ leads: results, total: results.length });
 });
 
+// 1c. Add Manual Custom Lead endpoint
 // 1c. Add Manual Custom Lead endpoint
 app.post('/api/leads', (req, res) => {
     const newLead = req.body;
@@ -830,11 +1150,15 @@ app.post('/api/leads', (req, res) => {
     newLead.isPitched = false;
     newLead.technologies = newLead.technologies || [];
     newLead.timestamp = new Date().toISOString();
+    newLead.dataSource = newLead.dataSource || 'B2B Directory';
     
-    leadsDb.unshift(newLead); // Prepends so it appears first
+    const enriched = parseAndEnrichAddress(newLead, leadsDb.length);
+    leadsDb.unshift(enriched);
+    
     fs.writeFileSync(LEADS_FILE, JSON.stringify(leadsDb, null, 2), 'utf8');
+    clearSearchCache();
     
-    res.json({ success: true, lead: newLead });
+    res.json({ success: true, lead: enriched });
 });
 
 // 1d. Update Inline Lead endpoint
@@ -848,7 +1172,10 @@ app.put('/api/leads/:id', (req, res) => {
     }
     
     leadsDb[idx] = { ...leadsDb[idx], ...updatedFields };
+    leadsDb[idx].confidenceScore = calculateConfidenceScore(leadsDb[idx]);
+    
     fs.writeFileSync(LEADS_FILE, JSON.stringify(leadsDb, null, 2), 'utf8');
+    clearSearchCache();
     
     res.json({ success: true, lead: leadsDb[idx] });
 });

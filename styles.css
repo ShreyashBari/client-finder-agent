@@ -1922,3 +1922,78 @@ input:checked + .slider:before {
         padding: 0 10px;
     }
 }
+
+/* ====================================================
+   Premium Theme & Shimmer Skeleton Loader Styling
+   ==================================================== */
+
+/* Premium Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--bg-input);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+}
+
+/* Shimmer Skeleton rows */
+.skeleton-row td {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.skeleton-bar {
+    background: linear-gradient(90deg, 
+        rgba(31, 41, 55, 0.6) 25%, 
+        rgba(55, 65, 81, 0.8) 50%, 
+        rgba(31, 41, 55, 0.6) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-pulse 1.6s infinite linear;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@keyframes shimmer-pulse {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Glassmorphism Navigation Drawer Header */
+.mobile-header {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(14, 19, 31, 0.8) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.app-sidebar {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+/* Glow Highlights on Active elements */
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.08) !important;
+    border-left: 3px solid var(--primary);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+}
+
+.card, .table-card, .chart-card {
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover, .table-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
