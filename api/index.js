@@ -307,6 +307,20 @@ async function getCityTemplate(cityQuery) {
                 const state = addr.state || addr.county || cityQuery;
                 const city = addr.city || addr.town || addr.suburb || cityQuery;
                 
+                const localNeighborhoods = [];
+                if (addr.suburb) localNeighborhoods.push(addr.suburb);
+                if (addr.neighbourhood) localNeighborhoods.push(addr.neighbourhood);
+                if (addr.city_district) localNeighborhoods.push(addr.city_district);
+                if (addr.county) localNeighborhoods.push(addr.county);
+                if (addr.town) localNeighborhoods.push(addr.town);
+                
+                const defaults = ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley', 'Northside', 'Westside', 'Eastside', 'Southside'];
+                let idx = 0;
+                while (localNeighborhoods.length < 10) {
+                    localNeighborhoods.push(defaults[idx % defaults.length]);
+                    idx++;
+                }
+
                 const tpl = {
                     city: city.charAt(0).toUpperCase() + city.slice(1),
                     state: state.charAt(0).toUpperCase() + state.slice(1),
@@ -316,7 +330,7 @@ async function getCityTemplate(cityQuery) {
                     pinCodes: [addr.postcode || '12345'],
                     phonePrefix: DIAL_CODES[cc] || '+1',
                     streets: ['Main Street', 'Broadway', 'Oak Avenue', 'Maple Drive', 'High Street', 'Pine Road'],
-                    neighborhoods: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley']
+                    neighborhoods: localNeighborhoods
                 };
                 
                 geocodingCache.set(clean, tpl);
@@ -331,6 +345,17 @@ async function getCityTemplate(cityQuery) {
     const offlineTpl = getCityTemplateSync(cityQuery);
     geocodingCache.set(clean, offlineTpl);
     return offlineTpl;
+}
+
+function getHashCode(str) {
+    let hash = 0;
+    if (!str || str.length === 0) return hash;
+    for (let i = 0; i < str.length; i++) {
+        const chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+    }
+    return Math.abs(hash);
 }
 
 // Clean name
@@ -497,6 +522,7 @@ function parseAndEnrichAddress(lead, index) {
 }
 
 function generateDynamicB2BLeads(niche, tpl) {
+    const seed = getHashCode(tpl.city || 'New York');
     const leads = [];
     const usedNames = new Set();
     
@@ -512,11 +538,11 @@ function generateDynamicB2BLeads(niche, tpl) {
     const jobLevels = ['Owner', 'Executive', 'C-Level', 'Director', 'VP', 'Manager'];
     
     for (let i = 0; i < 200; i++) {
-        const noun = businessNouns[i % businessNouns.length];
-        const fName = firstNames[(i * 3 + 2) % firstNames.length];
-        const lName = lastNames[(i * 7 + 4) % lastNames.length];
+        const noun = businessNouns[(i + seed) % businessNouns.length];
+        const fName = firstNames[((i * 3) + seed + 2) % firstNames.length];
+        const lName = lastNames[((i * 7) + (seed * 3) + 4) % lastNames.length];
         
-        let prefix = tpl.neighborhoods[i % tpl.neighborhoods.length];
+        let prefix = tpl.neighborhoods[(i + seed) % tpl.neighborhoods.length];
         if (i % 2 === 0) {
             prefix = lName;
         }
@@ -1178,18 +1204,19 @@ app.get('/api/maps-leads', async (req, res) => {
     else if (cleanCat.includes('jewel') || cleanCat.includes('gold') || cleanCat.includes('diamond')) key = 'Jewellers';
     else if (cleanCat.includes('rest') || cleanCat.includes('cafe') || cleanCat.includes('bistro') || cleanCat.includes('eat') || cleanCat.includes('food')) key = 'Restaurants';
     
+    const seed = getHashCode(loc);
     const generated = [];
     const usedNames = new Set();
     const nounList = businessPatterns[key]?.suffixes || businessPatterns.fallback.suffixes;
     const prefixList = businessPatterns[key]?.prefixes || businessPatterns.fallback.prefixes;
     
     for (let i = 0; i < 200; i++) {
-        const prefix = prefixList[i % prefixList.length];
-        const suffix = nounList[(i * 3) % nounList.length];
+        const prefix = prefixList[(i + seed) % prefixList.length];
+        const suffix = nounList[((i * 3) + (seed * 7)) % nounList.length];
         
         let bName = `${prefix} ${suffix}`;
         if (i % 3 === 0) {
-            const neighborhood = tpl.neighborhoods[i % tpl.neighborhoods.length];
+            const neighborhood = tpl.neighborhoods[(i + seed) % tpl.neighborhoods.length];
             bName = `${neighborhood} ${suffix}`;
         }
         
