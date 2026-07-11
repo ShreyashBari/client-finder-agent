@@ -1636,6 +1636,13 @@ input:checked + .slider:before {
     display: block;
 }
 
+/* Cell Wrapper for desktop/mobile responsive alignment */
+.cell-content-wrapper {
+    display: block;
+    width: 100%;
+    text-align: inherit;
+}
+
 /* Large Screens / Tablets Medium Viewport Adjustment */
 @media (max-width: 1024px) {
     .workspace-grid {
@@ -1779,8 +1786,37 @@ input:checked + .slider:before {
     
     /* Lead Detail Modal Responsiveness */
     .modal-content {
-        width: 95%;
-        max-height: 95vh;
+        width: 95% !important;
+        max-height: 95vh !important;
+    }
+    
+    .modal-header {
+        padding: 12px 16px !important;
+    }
+    
+    .modal-header .company-logo-large {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 16px !important;
+        border-radius: var(--radius-md) !important;
+    }
+    
+    .modal-title-group h3 {
+        font-size: 15px !important;
+    }
+    
+    .modal-title-group .company-sub {
+        font-size: 11.5px !important;
+    }
+    
+    .modal-close {
+        width: 44px !important;
+        height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 24px !important;
+        padding: 0 !important;
     }
     
     .modal-grid {
@@ -1904,6 +1940,59 @@ input:checked + .slider:before {
     .app-table td a.btn {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Cell content flex wrapper for stacked mobile alignment */
+    .cell-content-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        text-align: right !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        width: auto !important;
+    }
+
+    /* Workspace Actions Wrap & Mobile Button Grid */
+    .workspace-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+    
+    .actions-left {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .actions-right {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    
+    .actions-right .btn {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-height: 44px !important;
+        font-size: 13px !important;
+        padding: 10px !important;
+    }
+
+    /* Mobile Touch Targets Sizing */
+    .btn, 
+    .btn-sm, 
+    select, 
+    input[type="text"], 
+    input[type="email"], 
+    input[type="password"], 
+    input[type="number"], 
+    .nav-item,
+    .mode-tab {
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 }
 

@@ -253,45 +253,59 @@ function renderLeadsTable() {
                 <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
                 <span>Pitch</span>
             </button>`;
-
         tr.innerHTML = `
             <td class="checkbox-col">
                 <input type="checkbox" class="lead-row-select" data-id="${lead.id}" ${isChecked}>
             </td>
             <td data-label="Prospect">
-                <span class="prospect-name">${lead.contactName}</span>
-                <span class="prospect-sub">${lead.contactRole}</span>
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+                    <span class="prospect-name">${lead.contactName}</span>
+                    <span class="prospect-sub">${lead.contactRole}</span>
+                </div>
             </td>
             <td data-label="Niche">
-                <span class="tag ${lead.countryCode === 'IN' ? 'emerald' : 'indigo'}">${lead.niche}</span>
+                <div class="cell-content-wrapper">
+                    <span class="tag ${lead.countryCode === 'IN' ? 'emerald' : 'indigo'}">${lead.niche}</span>
+                </div>
             </td>
             <td data-label="Company">
-                <span class="prospect-name">${lead.companyName}</span>
-                <span class="prospect-sub">${geoTag}</span>
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+                    <span class="prospect-name">${lead.companyName}</span>
+                    <span class="prospect-sub">${geoTag}</span>
+                </div>
             </td>
             <td class="email-cell" data-label="Contact">
-                <div style="font-weight: 500; margin-bottom: 2px;">${lead.email}</div>
-                <div style="font-size: 11.5px; color: var(--color-text-dim); font-family: var(--font-mono);">${lead.phone}</div>
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right; overflow: hidden; max-width: 100%;">
+                    <div style="font-weight: 500; margin-bottom: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 180px;">${lead.email}</div>
+                    <div style="font-size: 11.5px; color: var(--color-text-dim); font-family: var(--font-mono);">${lead.phone}</div>
+                </div>
             </td>
             <td data-label="Tech Tools">
-                <div class="tech-pills">${techList}</div>
+                <div class="cell-content-wrapper" style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px;">
+                    <div class="tech-pills">${techList}</div>
+                </div>
             </td>
             <td data-label="Confidence">
-                <div style="font-weight: 600; font-family: var(--font-mono); font-size: 12px; display: flex; align-items: center; justify-content: space-between; width: 70px;">
-                    <span>${lead.confidenceScore}%</span>
-                    ${lead.isVerified ? 
-                        `<i data-lucide="check-check" style="width: 12px; height: 12px; color: var(--success);"></i>` :
-                        `<i data-lucide="alert-circle" style="width: 12px; height: 12px; color: var(--warning);"></i>`
-                    }
-                </div>
-                <div class="confidence-bar-container">
-                    <div class="confidence-bar ${barClass}" style="width: ${lead.confidenceScore}%;"></div>
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <div style="font-weight: 600; font-family: var(--font-mono); font-size: 12px; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                        <span>${lead.confidenceScore}%</span>
+                        ${lead.isVerified ? 
+                            `<i data-lucide="check-check" style="width: 12px; height: 12px; color: var(--success);"></i>` :
+                            `<i data-lucide="alert-circle" style="width: 12px; height: 12px; color: var(--warning);"></i>`
+                        }
+                    </div>
+                    <div class="confidence-bar-container" style="width: 70px;">
+                        <div class="confidence-bar ${barClass}" style="width: ${lead.confidenceScore}%;"></div>
+                    </div>
                 </div>
             </td>
             <td class="action-col">
-                ${pitchBtn}
+                <div class="cell-content-wrapper">
+                    ${pitchBtn}
+                </div>
             </td>
         `;
+
         
         // Single row click listeners to view details (excluding clicking the check or button)
         tr.addEventListener('click', (e) => {
@@ -1949,28 +1963,43 @@ function renderLiveLeadsTable() {
         tr.className = 'lead-row';
         tr.innerHTML = `
             <td style="font-weight: 600; color: var(--color-text); padding: 12px;" data-label="Opportunity">
-                <div style="font-size: 14px; margin-bottom: 4px;">${lead.title}</div>
-                <div style="font-size: 11.5px; font-weight: normal; color: var(--color-text-muted); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    ${lead.auditNote}
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+                    <div style="font-size: 14px; margin-bottom: 4px;">${lead.title}</div>
+                    <div style="font-size: 11.5px; font-weight: normal; color: var(--color-text-muted); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${lead.auditNote}
+                    </div>
                 </div>
             </td>
             <td style="padding: 12px;" data-label="Platform">
-                <span class="badge-tag" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${lead.platform}</span>
+                <div class="cell-content-wrapper">
+                    <span class="badge-tag" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${lead.platform}</span>
+                </div>
             </td>
-            <td style="padding: 12px; font-size: 13px;" data-label="Client">${lead.companyName}</td>
-            <td style="padding: 12px; font-size: 13px;" data-label="Location">${lead.location}</td>
-            <td style="font-weight: 500; color: #10b981; padding: 12px; font-size: 13px;" data-label="Budget">${lead.revenue}</td>
+            <td style="padding: 12px; font-size: 13px;" data-label="Client">
+                <div class="cell-content-wrapper">${lead.companyName}</div>
+            </td>
+            <td style="padding: 12px; font-size: 13px;" data-label="Location">
+                <div class="cell-content-wrapper" style="text-align: right;">${lead.location}</div>
+            </td>
+            <td style="font-weight: 500; color: #10b981; padding: 12px; font-size: 13px;" data-label="Budget">
+                <div class="cell-content-wrapper">${lead.revenue}</div>
+            </td>
             <td style="padding: 12px; font-size: 12.5px; color: var(--color-text-muted);" data-label="Channel">
-                <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <i data-lucide="message-square" style="width: 12px; height: 12px;"></i> Platform Chat
-                </span>
+                <div class="cell-content-wrapper">
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <i data-lucide="message-square" style="width: 12px; height: 12px;"></i> Platform Chat
+                    </span>
+                </div>
             </td>
             <td class="action-col" style="padding: 12px;">
-                <a href="${lead.originalUrl}" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; text-decoration: none;">
-                    <i data-lucide="external-link" style="width: 12px; height: 12px;"></i> Pitch Client
-                </a>
+                <div class="cell-content-wrapper">
+                    <a href="${lead.originalUrl}" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; text-decoration: none;">
+                        <i data-lucide="external-link" style="width: 12px; height: 12px;"></i> Pitch Client
+                    </a>
+                </div>
             </td>
         `;
+
         tbody.appendChild(tr);
     });
     
@@ -2081,20 +2110,35 @@ function renderMapsLeadsTable() {
         
         tr.innerHTML = `
             <td style="font-weight: 600; color: var(--color-text); padding: 12px;" data-label="Business Name">
-                <div style="font-size: 14px; margin-bottom: 4px;">${lead.companyName}</div>
-                <div style="font-size: 11.5px; font-weight: normal; color: var(--color-text-muted);">${lead.niche}</div>
+                <div class="cell-content-wrapper" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+                    <div style="font-size: 14px; margin-bottom: 4px;">${lead.companyName}</div>
+                    <div style="font-size: 11.5px; font-weight: normal; color: var(--color-text-muted);">${lead.niche}</div>
+                </div>
             </td>
-            <td style="padding: 12px;" data-label="Rating">${ratingHtml}</td>
-            <td style="padding: 12px; font-size: 13px;" data-label="Location">${lead.location}</td>
-            <td style="padding: 12px;" data-label="Website">${webUrlHtml}</td>
-            <td style="padding: 12px;" data-label="Audit Status">${webStatusHtml}</td>
-            <td style="font-family: monospace; font-size: 12.5px; color: var(--color-text-muted); padding: 12px;" data-label="Email">${lead.email || '<span style="font-style:italic;">No Email Listed</span>'}</td>
+            <td style="padding: 12px;" data-label="Rating">
+                <div class="cell-content-wrapper">${ratingHtml}</div>
+            </td>
+            <td style="padding: 12px; font-size: 13px;" data-label="Location">
+                <div class="cell-content-wrapper" style="text-align: right;">${lead.location}</div>
+            </td>
+            <td style="padding: 12px;" data-label="Website">
+                <div class="cell-content-wrapper" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${webUrlHtml}</div>
+            </td>
+            <td style="padding: 12px;" data-label="Audit Status">
+                <div class="cell-content-wrapper">${webStatusHtml}</div>
+            </td>
+            <td style="font-family: monospace; font-size: 12.5px; color: var(--color-text-muted); padding: 12px;" data-label="Email">
+                <div class="cell-content-wrapper">${lead.email || '<span style="font-style:italic;">No Email Listed</span>'}</div>
+            </td>
             <td class="action-col" style="padding: 12px;">
-                <button class="btn btn-primary btn-sm maps-lead-pitch-btn" data-id="${lead.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;">
-                    <i data-lucide="mail" style="width: 12px; height: 12px;"></i> Pitch
-                </button>
+                <div class="cell-content-wrapper">
+                    <button class="btn btn-primary btn-sm maps-lead-pitch-btn" data-id="${lead.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;">
+                        <i data-lucide="mail" style="width: 12px; height: 12px;"></i> Pitch
+                    </button>
+                </div>
             </td>
         `;
+
         tbody.appendChild(tr);
     });
     
