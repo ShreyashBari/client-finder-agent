@@ -104,6 +104,16 @@ async function syncDataFromServer() {
             state.stats = await statsRes.json();
             renderAnalytics();
         }
+        
+        // Fetch API Keys settings
+        const apiKeyRes = await fetch('/api/settings/api-keys');
+        if (apiKeyRes.ok) {
+            const apiKeys = await apiKeyRes.json();
+            const placesInput = document.getElementById('google-places-api-key');
+            if (placesInput && apiKeys.googlePlaces) {
+                placesInput.value = apiKeys.googlePlaces;
+            }
+        }
     } catch (e) {
         console.error('Failed to sync server state:', e);
         showToast('Error syncing with server database.', 'error');
@@ -1542,6 +1552,39 @@ function setupEventListeners() {
         gmailOaForm.addEventListener('submit', (e) => {
             e.preventDefault();
             connectGmailOauth();
+        });
+    }
+
+    // Save API Keys configuration
+    const apiKeysForm = document.getElementById('form-api-keys');
+    if (apiKeysForm) {
+        apiKeysForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const placesKey = document.getElementById('google-places-api-key').value.trim();
+            const btn = document.getElementById('save-api-keys-btn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            try {
+                const res = await fetch('/api/settings/api-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ googlePlaces: placesKey })
+                });
+                
+                if (res.ok) {
+                    showToast('API Configuration saved successfully!', 'success');
+                } else {
+                    showToast('Failed to save API keys.', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error saving API configuration.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save API Configuration';
+            }
         });
     }
 
