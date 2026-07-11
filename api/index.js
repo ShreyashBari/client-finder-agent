@@ -12,9 +12,14 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Request logging middleware
+// Request logging middleware & Disable caching for API routes
 app.use((req, res, next) => {
     console.log(`[REQUEST] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+    if (req.url.startsWith('/api/')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
     next();
 });
 
@@ -45,6 +50,7 @@ function writeDb(data) {
 // Local City Templates Dictionary
 const CITY_TEMPLATES = {
     dubai: {
+        aliases: ['dubai', 'dxb', 'uae', 'emirates'],
         city: 'Dubai',
         state: 'Dubai',
         country: 'United Arab Emirates',
@@ -56,6 +62,7 @@ const CITY_TEMPLATES = {
         neighborhoods: ['Dubai Marina', 'Jumeirah', 'Palm Jumeirah', 'Deira', 'Bur Dubai', 'Business Bay', 'Al Barsha', 'JLT', 'Downtown Dubai', 'DIFC']
     },
     pune: {
+        aliases: ['pune', 'punya', 'poona'],
         city: 'Pune',
         state: 'Maharashtra',
         country: 'India',
@@ -63,32 +70,35 @@ const CITY_TEMPLATES = {
         flag: '🇮🇳',
         pinCodes: ['411001', '411004', '411007', '411014', '411021', '411038', '411045'],
         phonePrefix: '+91 20',
-        streets: ['Senapati Bapat Road', 'Koregaon Park Road', 'Fergusson College Road', 'Baner Road', 'Viman Nagar Road', 'Karve Road', 'Jangli Maharaj Road'],
-        neighborhoods: ['Koregaon Park', 'Kalyani Nagar', 'Kothrud', 'Viman Nagar', 'Baner', 'Aundh', 'Shivajinagar', 'Hadapsar', 'Hinjewadi', 'Wakad']
+        streets: ['Senapati Bapat Road', 'F.C. Road', 'Karve Road', 'J.M. Road', 'Viman Nagar Road', 'Baner Road'],
+        neighborhoods: ['Koregaon Park', 'Kothrud', 'Deccan Gymkhana', 'Viman Nagar', 'Kalyani Nagar', 'Shivajinagar', 'Aundh', 'Baner']
     },
     mumbai: {
+        aliases: ['mumbai', 'bombay'],
         city: 'Mumbai',
         state: 'Maharashtra',
         country: 'India',
         countryCode: 'IN',
         flag: '🇮🇳',
-        pinCodes: ['400001', '400005', '400012', '400020', '400050', '400076', '400092'],
+        pinCodes: ['400001', '400008', '400020', '400050', '400098', '400011'],
         phonePrefix: '+91 22',
-        streets: ['Colaba Causeway', 'Linking Road', 'Marine Drive', 'Bandra Kurla Complex Rd', 'Chhatrapati Shivaji Maharaj Marg', 'Sardar Patel Road'],
-        neighborhoods: ['Bandra', 'Andheri', 'Colaba', 'Juhu', 'Worli', 'Chembur', 'Powai', 'Malad', 'Dadar', 'Goregaon']
+        streets: ['Linking Road', 'Colaba Causeway', 'Marine Drive', 'S.V. Road', 'CST Road', 'LBS Marg'],
+        neighborhoods: ['Colaba', 'Bandra', 'Andheri', 'Juhu', 'Worli', 'Nariman Point', 'Powai', 'Chembur']
     },
     london: {
+        aliases: ['london', 'uk', 'england'],
         city: 'London',
-        state: 'England',
+        state: 'London',
         country: 'United Kingdom',
         countryCode: 'GB',
         flag: '🇬🇧',
-        pinCodes: ['EC1A 1BB', 'W1B 5AH', 'SW1A 1AA', 'NW1 6XE', 'E1 6AN', 'SE1 9SG', 'WC2N 5DU'],
+        pinCodes: ['EC1A 1BB', 'W1A 1AA', 'SW1A 1AA', 'SE1 9SG', 'E1 6AN', 'NW1 4NP'],
         phonePrefix: '+44 20',
-        streets: ['Oxford Street', 'Regent Street', 'Piccadilly', 'Baker Street', 'Kensington High Street', 'Bond Street', 'Fleet Street'],
-        neighborhoods: ['Mayfair', 'Chelsea', 'Soho', 'Kensington', 'Greenwich', 'Richmond', 'Camden', 'Westminster', 'Paddington', 'Shoreditch']
+        streets: ['Oxford Street', 'Regent Street', 'Piccadilly', 'Baker Street', 'Abbey Road', 'Kensington High Street'],
+        neighborhoods: ['Westminster', 'Camden', 'Kensington', 'Chelsea', 'Soho', 'Covent Garden', 'Greenwich']
     },
     newyork: {
+        aliases: ['newyork', 'new york', 'nyc', 'manhattan', 'brooklyn'],
         city: 'New York',
         state: 'NY',
         country: 'United States',
@@ -100,6 +110,7 @@ const CITY_TEMPLATES = {
         neighborhoods: ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Harlem', 'Astoria', 'Tribeca', 'SoHo', 'Williamsburg', 'Staten Island']
     },
     bangalore: {
+        aliases: ['bangalore', 'banglore', 'bengaluru', 'blr'],
         city: 'Bangalore',
         state: 'Karnataka',
         country: 'India',
@@ -111,6 +122,7 @@ const CITY_TEMPLATES = {
         neighborhoods: ['Indiranagar', 'Koramangala', 'Jayanagar', 'HSR Layout', 'Whitefield', 'Electronic City', 'Malleswaram', 'Sadashivanagar']
     },
     sanfrancisco: {
+        aliases: ['sanfrancisco', 'san francisco', 'sf', 'silicon valley'],
         city: 'San Francisco',
         state: 'CA',
         country: 'United States',
@@ -122,28 +134,31 @@ const CITY_TEMPLATES = {
         neighborhoods: ['Financial District', 'Mission District', 'SoMa', 'Marina', 'North Beach', 'Castro', 'Pacific Heights', 'Noe Valley']
     },
     singapore: {
+        aliases: ['singapore', 'sg', 'changi'],
         city: 'Singapore',
         state: 'Singapore',
         country: 'Singapore',
         countryCode: 'SG',
         flag: '🇸🇬',
         pinCodes: ['048624', '189768', '238873', '039797', '098585', '179037'],
-        phonePrefix: '+65 6',
-        streets: ['Orchard Road', 'Marina Boulevard', 'Raffles Quay', 'Shenton Way', 'Victoria Street', 'Bras Basah Road'],
-        neighborhoods: ['Downtown Core', 'Marina Bay', 'Orchard', 'Sentosa', 'Chinatown', 'Little India', 'Bugis', 'Tiong Bahru']
+        phonePrefix: '+65',
+        streets: ['Orchard Road', 'Marina Boulevard', 'Raffles Avenue', 'Shenton Way', 'Victoria Street'],
+        neighborhoods: ['Marina Bay', 'Downtown Core', 'Orchard', 'Chinatown', 'Little India', 'Sentosa', 'Jurong']
     },
     berlin: {
+        aliases: ['berlin', 'germany', 'de'],
         city: 'Berlin',
         state: 'Berlin',
         country: 'Germany',
         countryCode: 'DE',
         flag: '🇩🇪',
-        pinCodes: ['10115', '10178', '10719', '10963', '10435', '14195'],
+        pinCodes: ['10115', '10117', '10435', '10785', '10963', '10243'],
         phonePrefix: '+49 30',
-        streets: ['Kurfürstendamm', 'Friedrichstraße', 'Unter den Linden', 'Karl-Liebknecht-Straße', 'Oranienburger Straße', 'Schönhauser Allee'],
-        neighborhoods: ['Mitte', 'Kreuzberg', 'Prenzlauer Berg', 'Charlottenburg', 'Friedrichshain', 'Neukölln', 'Schöneberg']
+        streets: ['Unter den Linden', 'Kurfurstendamm', 'Friedrichstrasse', 'Karl-Liebknecht-Strasse', 'Oranienburger Strasse'],
+        neighborhoods: ['Mitte', 'Kreuzberg', 'Prenzlauer Berg', 'Charlottenburg', 'Friedrichshain', 'Neukolln', 'Schoneberg']
     },
     toronto: {
+        aliases: ['toronto', 'tor', 'canada', 'ontario'],
         city: 'Toronto',
         state: 'ON',
         country: 'Canada',
@@ -159,19 +174,54 @@ const CITY_TEMPLATES = {
 function getCityTemplate(cityQuery) {
     if (!cityQuery) return CITY_TEMPLATES.newyork;
     const clean = cityQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    // Try matching aliases
+    for (const key of Object.keys(CITY_TEMPLATES)) {
+        const tpl = CITY_TEMPLATES[key];
+        if (tpl.aliases && tpl.aliases.some(alias => clean.includes(alias) || alias.includes(clean))) {
+            return tpl;
+        }
+    }
+    
+    // String inclusion matching
     for (const key of Object.keys(CITY_TEMPLATES)) {
         if (clean.includes(key) || key.includes(clean)) {
             return CITY_TEMPLATES[key];
         }
     }
+    
+    // Smart fallback country logic
+    let fallbackCountry = 'United States';
+    let fallbackCountryCode = 'US';
+    let fallbackFlag = '🇺🇸';
+    let fallbackPhonePrefix = '+1 555';
+    
+    const queryLower = cityQuery.toLowerCase();
+    if (queryLower.includes('india') || queryLower.includes('pune') || queryLower.includes('mumbai') || queryLower.includes('bangalore') || queryLower.includes('banglore') || queryLower.includes('delhi')) {
+        fallbackCountry = 'India';
+        fallbackCountryCode = 'IN';
+        fallbackFlag = '🇮🇳';
+        fallbackPhonePrefix = '+91 20';
+    } else if (queryLower.includes('uk') || queryLower.includes('united kingdom') || queryLower.includes('london')) {
+        fallbackCountry = 'United Kingdom';
+        fallbackCountryCode = 'GB';
+        fallbackFlag = '🇬🇧';
+        fallbackPhonePrefix = '+44 20';
+    } else if (queryLower.includes('dubai') || queryLower.includes('uae') || queryLower.includes('emirates')) {
+        fallbackCountry = 'United Arab Emirates';
+        fallbackCountryCode = 'AE';
+        fallbackFlag = '🇦🇪';
+        fallbackPhonePrefix = '+971 4';
+    }
+    
     return {
-        city: cityQuery,
-        state: cityQuery,
-        country: 'United States',
-        countryCode: 'US',
-        flag: '🇺🇸',
+        city: cityQuery.charAt(0).toUpperCase() + cityQuery.slice(1),
+        state: cityQuery.charAt(0).toUpperCase() + cityQuery.slice(1),
+        country: fallbackCountry,
+        countryCode: fallbackCountryCode,
+        flag: fallbackFlag,
         pinCodes: ['12345'],
-        phonePrefix: '+1 555',
+        phonePrefix: fallbackPhonePrefix,
         streets: ['Main Street', 'Broadway', 'Oak Avenue', 'Maple Drive', 'High Street', 'Pine Road'],
         neighborhoods: ['Downtown', 'Central', 'Parkside', 'Heights', 'Valley']
     };
