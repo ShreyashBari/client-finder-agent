@@ -113,6 +113,10 @@ async function syncDataFromServer() {
             if (placesInput && apiKeys.googlePlaces) {
                 placesInput.value = apiKeys.googlePlaces;
             }
+            const geminiInput = document.getElementById('gemini-api-key');
+            if (geminiInput && apiKeys.gemini) {
+                geminiInput.value = apiKeys.gemini;
+            }
         }
     } catch (e) {
         console.error('Failed to sync server state:', e);
@@ -767,7 +771,7 @@ function openLeadDetailsModal(lead) {
 }
 
 // Generate email body draft dynamically
-function generateColdEmailDraft(lead, tone) {
+async function generateColdEmailDraft(lead, tone) {
     const contactName = lead.contactFirstName;
     const company = lead.companyName;
     const niche = lead.niche.toLowerCase();
@@ -780,16 +784,47 @@ function generateColdEmailDraft(lead, tone) {
     if (tone === 'casual') {
         subject = `A quick suggestion for ${company}'s site`;
         body = `Hey ${contactName},\n\nI was browsing ${company} today and noticed a bottleneck: ${audit}\n\nWe specialize in fixing these performance and UX issues for businesses in the ${niche} sector. We recently helped a similar company resolve this and boost client conversion rates by 35%.\n\nAre you open to a quick 10-minute chat this Saturday or Sunday to see if we can optimize this for you?\n\nBest regards,\n${sender}`;
+        document.getElementById('modal-email-subject').value = subject;
+        document.getElementById('modal-email-body').value = body;
     } else if (tone === 'formal') {
         subject = `Operational Audit: Addressing optimization opportunities at ${company}`;
         body = `Dear Mr./Ms. ${lead.contactLastName},\n\nI hope this message finds you well.\n\nI am writing to you because of your role as ${lead.contactRole} at ${company}. Our consulting team recently completed a digital audit of your assets, identifying a significant opportunity:\n\n--> ${lead.auditNote}\n\nAddressing this bottleneck directly impacts client retention and brand authority. Our team specializes in solving this exact class of technological optimization issues.\n\nWould you be open to scheduling a brief introductory call to discuss how our services could align with your strategic targets for the current quarter?\n\nSincerely,\n\n${sender}`;
-    } else { // value-driven
+        document.getElementById('modal-email-subject').value = subject;
+        document.getElementById('modal-email-body').value = body;
+    } else if (tone === 'value') {
         subject = `Fixing the 20% conversion leak on ${company}'s website`;
         body = `Hi ${contactName},\n\nMost businesses in the ${niche} space face a common digital bottleneck: ${audit}\n\nThis issue typically causes businesses to lose up to 20% of their mobile traffic due to bounce rates and UX friction.\n\nWe recently implemented a custom optimization project that resolved this, resulting in:\n- 35% improvement in page load speeds\n- 40% increases in mobile contact form submissions\n- Faster client booking rates\n\nI have prepared a quick, 2-page brief detailing our fix and how it applies to ${company}. May I send it over for you to look at?\n\nBest,\n${sender}`;
+        document.getElementById('modal-email-subject').value = subject;
+        document.getElementById('modal-email-body').value = body;
+    } else if (tone === 'ai_custom') {
+        document.getElementById('modal-email-subject').value = 'Generating AI Custom Subject...';
+        document.getElementById('modal-email-body').value = 'Ingesting opportunity context into zero-hallucination processing engine...';
+        
+        try {
+            const res = await fetch('/api/generate-pitch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadId: lead.id })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('modal-email-subject').value = data.subject || 'Opportunity Brief';
+                document.getElementById('modal-email-body').value = data.body || '';
+                showToast('AI pitch generated successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to generate AI pitch.', 'error');
+                document.getElementById('modal-email-subject').value = 'API Configuration Error';
+                document.getElementById('modal-email-body').value = data.error || 'Failed to connect. Please configure your Gemini API Key in Settings.';
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Network error generating AI pitch.', 'error');
+            document.getElementById('modal-email-subject').value = 'Network Error';
+            document.getElementById('modal-email-body').value = 'Please check backend logs.';
+        }
     }
-    
-    document.getElementById('modal-email-subject').value = subject;
-    document.getElementById('modal-email-body').value = body;
 }
 
 // Open tracking history modal
@@ -1561,6 +1596,7 @@ function setupEventListeners() {
         apiKeysForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const placesKey = document.getElementById('google-places-api-key').value.trim();
+            const geminiKey = document.getElementById('gemini-api-key').value.trim();
             const btn = document.getElementById('save-api-keys-btn');
             
             btn.disabled = true;
@@ -1570,7 +1606,7 @@ function setupEventListeners() {
                 const res = await fetch('/api/settings/api-keys', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ googlePlaces: placesKey })
+                    body: JSON.stringify({ googlePlaces: placesKey, gemini: geminiKey })
                 });
                 
                 if (res.ok) {
