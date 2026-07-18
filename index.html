@@ -48,6 +48,11 @@
                     <i data-lucide="search"></i>
                     <span>Lead Search</span>
                 </button>
+                <button class="nav-item" data-view="review-queue">
+                    <i data-lucide="shield-alert"></i>
+                    <span>Review Queue</span>
+                    <span class="nav-badge" id="review-badge" style="background: var(--warning); color: #000; font-weight: 600;">0</span>
+                </button>
                 <button class="nav-item" data-view="campaigns">
                     <i data-lucide="layers"></i>
                     <span>Campaigns</span>
@@ -668,6 +673,44 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4.5. Review Queue View -->
+            <section id="view-review-queue" class="view-panel">
+                <header class="view-header">
+                    <div>
+                        <h2>Data Verification & Review Queue</h2>
+                        <p class="subtitle">Evaluate low-confidence or suspicious leads before they enter production</p>
+                    </div>
+                </header>
+
+                <div class="workspace-area">
+                    <div class="table-container card">
+                        <table class="leads-table">
+                            <thead>
+                                <tr>
+                                    <th>Business / Category</th>
+                                    <th>Confidence Score</th>
+                                    <th>Quality Metrics</th>
+                                    <th>Suspicious Flags & Explanation</th>
+                                    <th>Address / Contact</th>
+                                    <th class="action-col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="review-queue-tbody">
+                                <tr class="empty-state">
+                                    <td colspan="6">
+                                        <div class="empty-message">
+                                            <i data-lucide="shield-check"></i>
+                                            <h3>All Clear!</h3>
+                                            <p>No leads currently require manual verification.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

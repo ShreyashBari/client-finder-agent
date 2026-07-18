@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const querystring = require('querystring');
+const { runValidationPipeline } = require('./validator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,14 +33,19 @@ const LEADS_FILE = path.join(__dirname, 'leads_db.json');
 // Read/Write local JSON database
 function readDb() {
     if (!fs.existsSync(DB_FILE)) {
-        const defaultDb = { connections: [], sentEmails: [], campaigns: [] };
+        const defaultDb = { connections: [], sentEmails: [], campaigns: [], reviewQueue: [] };
         fs.writeFileSync(DB_FILE, JSON.stringify(defaultDb, null, 2), 'utf8');
         return defaultDb;
     }
     try {
-        return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        db.connections = db.connections || [];
+        db.sentEmails = db.sentEmails || [];
+        db.campaigns = db.campaigns || [];
+        db.reviewQueue = db.reviewQueue || [];
+        return db;
     } catch (e) {
-        return { connections: [], sentEmails: [], campaigns: [] };
+        return { connections: [], sentEmails: [], campaigns: [], reviewQueue: [] };
     }
 }
 
@@ -1449,16 +1455,13 @@ app.get('/api/maps-leads', async (req, res) => {
     res.json({ leads: results, total: results.length });
 });
 
-// 1c. Add Manual Custom Lead endpoint
-// 1c. Add Manual Custom Lead endpoint
-app.post('/api/leads', (req, res) => {
+app.post('/api/leads', async (req, res) => {
     const newLead = req.body;
     if (!newLead.companyName || !newLead.email) {
         return res.status(400).json({ error: 'Company Name and Email are required' });
     }
     
-    newLead.id = 'custom_' + Math.random().toString(36).substr(2, 9);
-    newLead.confidenceScore = newLead.confidenceScore || 100;
+    newLead.id = newLead.id || 'custom_' + Math.random().toString(36).substr(2, 9);
     newLead.isVerified = true;
     newLead.isPitched = false;
     newLead.technologies = newLead.technologies || [];
@@ -1466,12 +1469,98 @@ app.post('/api/leads', (req, res) => {
     newLead.dataSource = newLead.dataSource || 'B2B Directory';
     
     const enriched = parseAndEnrichAddress(newLead, leadsDb.length);
-    leadsDb.unshift(enriched);
     
+    // Run validation pipeline
+    const db = readDb();
+    const validation = await runValidationPipeline(enriched, leadsDb, db.apiKeys || {});
+    
+    enriched.confidenceScore = validation.confidenceScore;
+    enriched.status = validation.status;
+    enriched.warnings = validation.warnings;
+    enriched.verificationDetails = {
+        details: validation.details,
+        explanation: validation.explanation,
+        corrections: validation.corrections
+    };
+    
+    if (validation.corrections) {
+        if (validation.corrections.address) enriched.address = validation.corrections.address;
+        if (validation.corrections.city) enriched.city = validation.corrections.city;
+        if (validation.corrections.state) enriched.state = validation.corrections.state;
+        if (validation.corrections.phone) enriched.phone = validation.corrections.phone;
+    }
+    
+    if (validation.status === 'Rejected') {
+        return res.status(422).json({
+            success: false,
+            error: 'Lead rejected due to low confidence scores (below 60%).',
+            details: enriched
+        });
+    }
+    
+    if (validation.status === 'Needs Review') {
+        db.reviewQueue.unshift(enriched);
+        writeDb(db);
+        return res.json({
+            success: true,
+            status: 'Needs Review',
+            message: 'Lead added to the Manual Review Queue for administrator approval.',
+            lead: enriched
+        });
+    }
+    
+    // Verified status (>= 80%)
+    leadsDb.unshift(enriched);
     fs.writeFileSync(LEADS_FILE, JSON.stringify(leadsDb, null, 2), 'utf8');
     clearSearchCache();
     
-    res.json({ success: true, lead: enriched });
+    res.json({ success: true, status: 'Verified', lead: enriched });
+});
+
+// GET Manual Review Queue
+app.get('/api/leads/review', (req, res) => {
+    const db = readDb();
+    res.json(db.reviewQueue);
+});
+
+// Approve Lead from Review Queue
+app.post('/api/leads/review/:id/approve', (req, res) => {
+    const { id } = req.params;
+    const db = readDb();
+    
+    const idx = db.reviewQueue.findIndex(l => l.id === id);
+    if (idx === -1) {
+        return res.status(404).json({ error: 'Lead not found in Review Queue' });
+    }
+    
+    const lead = db.reviewQueue[idx];
+    lead.status = 'Verified';
+    lead.confidenceScore = Math.max(80, lead.confidenceScore || 80);
+    
+    db.reviewQueue.splice(idx, 1);
+    writeDb(db);
+    
+    leadsDb.unshift(lead);
+    fs.writeFileSync(LEADS_FILE, JSON.stringify(leadsDb, null, 2), 'utf8');
+    clearSearchCache();
+    
+    res.json({ success: true, lead });
+});
+
+// Reject/Discard Lead from Review Queue
+app.post('/api/leads/review/:id/reject', (req, res) => {
+    const { id } = req.params;
+    const db = readDb();
+    
+    const idx = db.reviewQueue.findIndex(l => l.id === id);
+    if (idx === -1) {
+        return res.status(404).json({ error: 'Lead not found in Review Queue' });
+    }
+    
+    db.reviewQueue.splice(idx, 1);
+    writeDb(db);
+    
+    res.json({ success: true });
 });
 
 // 1d. Update Inline Lead endpoint

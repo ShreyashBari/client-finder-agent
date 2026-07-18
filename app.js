@@ -14,6 +14,7 @@ let state = {
     emails: [],
     stats: { total: 0, openRate: 0, clickRate: 0, replyRate: 0, bounceRate: 0 },
     mapsLeads: [],
+    reviewQueue: [],
     
     // Active filters
     filters: {
@@ -117,6 +118,14 @@ async function syncDataFromServer() {
             if (geminiInput && apiKeys.gemini) {
                 geminiInput.value = apiKeys.gemini;
             }
+        }
+        
+        // Fetch Review Queue
+        const reviewRes = await fetch('/api/leads/review');
+        if (reviewRes.ok) {
+            state.reviewQueue = await reviewRes.json();
+            renderReviewQueue();
+            updateReviewBadge();
         }
     } catch (e) {
         console.error('Failed to sync server state:', e);
@@ -2351,4 +2360,145 @@ function renderLiveLeadsTableSkeleton() {
             <td class="action-col"><div class="skeleton-bar" style="width:80px;height:28px;border-radius:6px;"></div></td>
         </tr>
     `).join('');
+}
+
+// Update Review Queue Badge count
+function updateReviewBadge() {
+    const badge = document.getElementById('review-badge');
+    if (badge) badge.textContent = state.reviewQueue.length;
+}
+
+// Render Review Queue leads
+function renderReviewQueue() {
+    const tbody = document.getElementById('review-queue-tbody');
+    if (!tbody) return;
+    
+    if (state.reviewQueue.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="6">
+                    <div class="empty-message">
+                        <i data-lucide="shield-check"></i>
+                        <h3>All Clear!</h3>
+                        <p>No leads currently require manual verification.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        safeCreateIcons();
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    state.reviewQueue.forEach(lead => {
+        const tr = document.createElement('tr');
+        
+        let scoreClass = 'warning';
+        if (lead.confidenceScore >= 95) scoreClass = 'success';
+        else if (lead.confidenceScore >= 80) scoreClass = 'info';
+        else if (lead.confidenceScore < 60) scoreClass = 'danger';
+        
+        const warningsList = (lead.warnings || []).map(w => `<span class="badge badge-warning" style="margin-right: 4px; margin-bottom: 4px; display: inline-block; font-size: 11px; padding: 2px 6px;">${w}</span>`).join('');
+        
+        const details = lead.verificationDetails?.details || {};
+        const emailScore = details.emailScore !== undefined ? details.emailScore : 'N/A';
+        const phoneScore = details.phoneScore !== undefined ? details.phoneScore : 'N/A';
+        const webScore = details.websiteScore !== undefined ? details.websiteScore : 'N/A';
+        const addrScore = details.addressScore !== undefined ? details.addressScore : 'N/A';
+        
+        const explanation = lead.verificationDetails?.explanation || 'Awaiting verification details.';
+        
+        tr.innerHTML = `
+            <td>
+                <div class="lead-company-info">
+                    <div class="lead-avatar" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">${(lead.companyName || 'C').charAt(0)}</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 14px; font-weight: 600;">${lead.companyName}</h4>
+                        <span style="font-size: 12px; color: var(--color-text-muted);">${lead.niche}</span>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="status-pill ${scoreClass}" style="font-weight: 600;">
+                        <span class="status-dot"></span>
+                        <span>${lead.confidenceScore}%</span>
+                    </span>
+                    <span style="font-size: 12px; color: var(--color-text-dim); font-weight: 500;">(${lead.status})</span>
+                </div>
+            </td>
+            <td>
+                <div style="font-size: 11.5px; color: var(--color-text-muted); line-height: 1.5;">
+                    <div>Email: <strong style="color: ${emailScore >= 80 ? 'var(--success)' : 'var(--warning)'}">${emailScore}%</strong></div>
+                    <div>Phone: <strong style="color: ${phoneScore >= 80 ? 'var(--success)' : 'var(--warning)'}">${phoneScore}%</strong></div>
+                    <div>Web: <strong style="color: ${webScore >= 80 ? 'var(--success)' : 'var(--warning)'}">${webScore}%</strong></div>
+                    <div>Address: <strong style="color: ${addrScore >= 80 ? 'var(--success)' : 'var(--warning)'}">${addrScore}%</strong></div>
+                </div>
+            </td>
+            <td>
+                <div style="max-width: 250px;">
+                    <div style="margin-bottom: 6px;">${warningsList || '<span style="color: var(--success); font-size:12px;">No syntax warnings</span>'}</div>
+                    <p style="font-size: 12px; color: var(--color-text-dim); margin: 0; line-height: 1.4; font-style: italic;">"${explanation}"</p>
+                </div>
+            </td>
+            <td>
+                <div style="font-size: 12px; line-height: 1.5; color: var(--color-text-muted);">
+                    <div style="font-weight: 500; color: var(--color-text);">${lead.address || 'No address'}, ${lead.city || ''}</div>
+                    <div>Email: <a href="mailto:${lead.email}">${lead.email}</a></div>
+                    <div>Phone: <span>${lead.phone || 'No phone'}</span></div>
+                    <div>Web: <a href="${lead.website}" target="_blank">${lead.website || 'No site'}</a></div>
+                </div>
+            </td>
+            <td class="action-col">
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-primary btn-sm approve-lead-btn" data-id="${lead.id}" style="padding: 6px 10px; background: var(--success); border-color: var(--success); color: #000;" title="Approve & Add to active pool">
+                        <i data-lucide="check" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm reject-lead-btn" data-id="${lead.id}" style="padding: 6px 10px; border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.05);" title="Reject & Discard">
+                        <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tr.querySelector('.approve-lead-btn').addEventListener('click', () => approveReviewLead(lead.id));
+        tr.querySelector('.reject-lead-btn').addEventListener('click', () => rejectReviewLead(lead.id));
+        
+        tbody.appendChild(tr);
+    });
+    
+    safeCreateIcons();
+}
+
+async function approveReviewLead(id) {
+    if (!confirm('Are you sure you want to approve this lead and move it to the active pool?')) return;
+    try {
+        const res = await fetch(`/api/leads/review/${id}/approve`, { method: 'POST' });
+        if (res.ok) {
+            showToast('Lead approved and added to database!', 'success');
+            await syncDataFromServer();
+        } else {
+            showToast('Failed to approve lead.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Network error approving lead.', 'error');
+    }
+}
+
+async function rejectReviewLead(id) {
+    if (!confirm('Are you sure you want to reject and permanently discard this lead?')) return;
+    try {
+        const res = await fetch(`/api/leads/review/${id}/reject`, { method: 'POST' });
+        if (res.ok) {
+            showToast('Lead rejected and discarded.', 'info');
+            await syncDataFromServer();
+        } else {
+            showToast('Failed to reject lead.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Network error rejecting lead.', 'error');
+    }
 }
